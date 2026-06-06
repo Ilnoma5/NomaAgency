@@ -1,0 +1,3597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src https://fonts.gstatic.com;
+img-src 'self' data: blob: https://yodbeuwwjcffcrvlxlyg.supabase.co https://sccapnlbfxjidmwqaeqs.supabase.co;
+connect-src 'self' https://sccapnlbfxjidmwqaeqs.supabase.co wss://sccapnlbfxjidmwqaeqs.supabase.co;
+  frame-ancestors 'none';
+">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=()">
+<title>Luxe Nails — Admin Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Jost:wght@200;300;400;500&family=Italiana&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --noir: #0C0908;
+  --noir-2: #141010;
+  --noir-3: #1C1412;
+  --noir-4: #221816;
+  --gold: #C4963A;
+  --gold-light: #D9AB52;
+  --gold-dim: rgba(196,150,58,0.13);
+  --gold-border: rgba(196,150,58,0.22);
+  --rose: #C97B8A;
+  --text: #EDE5DF;
+  --text-2: rgba(237,229,223,0.65);
+  --text-muted: rgba(237,229,223,0.38);
+  --border: rgba(237,229,223,0.07);
+  --border-2: rgba(237,229,223,0.12);
+  --c-pending:   #7B9FCC;
+  --c-confirmed: #62B07A;
+  --c-completed: #C4963A;
+  --c-cancelled: #C25870;
+  --c-noshow:    #787878;
+  --sidebar-w: 224px;
+  --radius: 4px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: 'Jost', sans-serif; background: var(--noir); color: var(--text); overflow-x: hidden; font-size: 13px; line-height: 1.5; }
+
+/* ════ LOGIN ════ */
+#login-screen {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--noir);
+  background-image:
+    radial-gradient(ellipse 70% 60% at 25% 35%, rgba(196,150,58,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 70% at 80% 75%, rgba(201,123,138,0.05) 0%, transparent 60%);
+}
+.login-card { width: 100%; max-width: 380px; background: var(--noir-2); border: 1px solid var(--gold-border); padding: 48px 40px; text-align: center; }
+@media(max-width:480px){ .login-card { padding: 32px 22px; margin: 16px; } }
+.login-logo { font-family: 'Italiana', serif; font-size: 28px; letter-spacing: 3px; color: var(--text); margin-bottom: 4px; }
+.login-logo span { color: var(--gold); }
+.login-sub { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 36px; }
+.login-field { margin-bottom: 14px; text-align: left; }
+.login-label { display: block; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+.login-input { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.035); border: 1px solid var(--border-2); color: var(--text); font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 300; outline: none; transition: border-color 0.2s; border-radius: var(--radius); }
+.login-input:focus { border-color: var(--gold); background: rgba(255,255,255,0.05); }
+.login-input::placeholder { color: var(--text-muted); }
+.login-btn { width: 100%; padding: 13px; background: var(--gold); color: var(--noir); border: none; font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; transition: all 0.25s; margin-top: 8px; border-radius: var(--radius); }
+.login-btn:hover:not(:disabled) { background: var(--gold-light); }
+.login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-err { font-size: 12px; color: var(--c-cancelled); margin-top: 12px; display: none; }
+.login-err.show { display: block; }
+
+/* ════ FORGOT / RESET PASSWORD ════ */
+.login-forgot {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+  letter-spacing: 0.3px;
+  border: none;
+  background: none;
+  font-family: 'Jost', sans-serif;
+  width: 100%;
+  text-align: center;
+  padding: 4px 0;
+}
+.login-forgot:hover { color: var(--gold); }
+
+#forgot-screen, #reset-screen {
+  position: fixed; inset: 0; z-index: 1001;
+  display: none; align-items: center; justify-content: center;
+  background: var(--noir);
+  background-image:
+    radial-gradient(ellipse 70% 60% at 25% 35%, rgba(196,150,58,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 70% at 80% 75%, rgba(201,123,138,0.05) 0%, transparent 60%);
+}
+#forgot-screen.show, #reset-screen.show { display: flex; }
+
+.back-link {
+  display: inline-block;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-bottom: 24px;
+  transition: color 0.2s;
+  border: none;
+  background: none;
+  font-family: 'Jost', sans-serif;
+  padding: 0;
+}
+.back-link:hover { color: var(--gold); }
+
+.reset-success {
+  font-size: 12px;
+  color: var(--c-confirmed);
+  margin-top: 14px;
+  display: none;
+  line-height: 1.7;
+  background: rgba(98,176,122,0.07);
+  border: 1px solid rgba(98,176,122,0.2);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  text-align: left;
+}
+.reset-success.show { display: block; }
+
+.pw-strength {
+  height: 3px;
+  border-radius: 2px;
+  margin-top: 7px;
+  background: var(--border);
+  overflow: hidden;
+}
+.pw-strength-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease, background 0.3s ease;
+  width: 0%;
+}
+.pw-strength-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+  min-height: 15px;
+  transition: color 0.3s;
+}
+
+/* ════ APP SHELL ════ */
+#app { display: none; flex-direction: row; height: 100vh; overflow: hidden; }
+#app.show { display: flex; }
+
+/* ════ SIDEBAR ════ */
+.sidebar { width: var(--sidebar-w); background: var(--noir-2); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; overflow-x: hidden; transition: transform 0.28s ease; }
+.sidebar-logo { padding: 22px 18px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.sidebar-logo .logo-text { font-family: 'Italiana', serif; font-size: 20px; letter-spacing: 2px; color: var(--text); }
+.sidebar-logo .logo-text span { color: var(--gold); }
+.sidebar-logo .logo-role { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted); margin-top: 3px; }
+.sidebar-nav { padding: 12px 10px; flex: 1; }
+.nav-section-title { font-size: 8.5px; letter-spacing: 3px; text-transform: uppercase; color: rgba(196,150,58,0.4); padding: 0 8px; margin: 16px 0 5px; }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 10px; font-size: 12.5px; font-weight: 300; color: var(--text-2); cursor: pointer; transition: all 0.18s; border-radius: var(--radius); margin-bottom: 1px; border: 1px solid transparent; letter-spacing: 0.2px; }
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-item.active { color: var(--gold); background: var(--gold-dim); border-color: var(--gold-border); }
+.nav-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; opacity: 0.85; }
+.nav-badge { margin-left: auto; background: var(--rose); color: #fff; font-size: 10px; padding: 1px 7px; border-radius: 10px; }
+.sidebar-bottom { padding: 12px 10px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.user-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; margin-bottom: 6px; }
+.user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold-dim); border: 1px solid var(--gold-border); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--gold); flex-shrink: 0; cursor: pointer; transition: border-color 0.2s; position: relative; overflow: hidden; }
+.user-avatar:hover { border-color: var(--gold); }
+.user-avatar-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.18s; pointer-events: none; font-size: 11px; color: #fff; }
+.user-avatar:hover .user-avatar-overlay { opacity: 1; }
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.user-info { min-width: 0; }
+.user-name { font-size: 12px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role-text { font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 1px; }
+.logout-btn { width: 100%; padding: 7px 10px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-family: 'Jost', sans-serif; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; border-radius: var(--radius); text-align: center; }
+.logout-btn:hover { border-color: var(--c-cancelled); color: var(--c-cancelled); }
+
+/* ════ MAIN ════ */
+.main-content { flex: 1; overflow-y: auto; background: var(--noir); display: flex; flex-direction: column; min-width: 0; }
+.main-header { padding: 0 28px; height: 58px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; background: var(--noir); flex-shrink: 0; }
+.main-header-left { display: flex; align-items: center; gap: 14px; }
+.main-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 300; letter-spacing: 0.5px; }
+.header-pill { padding: 3px 10px; border: 1px solid rgba(98,176,122,0.3); background: rgba(98,176,122,0.08); font-size: 10px; letter-spacing: 1.5px; color: var(--c-confirmed); border-radius: 2px; }
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.header-date { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+@media(max-width:900px){ .header-date { display: none; } }
+.icon-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; font-size: 15px; transition: all 0.2s; border-radius: var(--radius); }
+.icon-btn:hover { border-color: var(--gold-border); color: var(--gold); }
+.btn-primary { padding: 7px 16px; background: var(--gold); color: var(--noir); border: none; font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: background 0.2s; border-radius: var(--radius); white-space: nowrap; }
+.btn-primary:hover { background: var(--gold-light); }
+.btn-ghost { padding: 7px 16px; background: transparent; color: var(--text-2); border: 1px solid var(--border-2); font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; border-radius: var(--radius); white-space: nowrap; }
+.btn-ghost:hover { border-color: var(--gold-border); color: var(--gold); }
+.add-btn { padding: 7px 16px; background: var(--gold); color: var(--noir); border: none; font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: background 0.2s; border-radius: var(--radius); white-space: nowrap; }
+.add-btn:hover { background: var(--gold-light); }
+
+/* ════ PAGES ════ */
+.page { display: none; padding: 24px 28px 32px; }
+.page.active { display: block; }
+
+/* ════ CARDS ════ */
+.card { background: var(--noir-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 16px; }
+.card-title { font-size: 9px; letter-spacing: 3.5px; text-transform: uppercase; color: var(--gold); font-weight: 400; margin-bottom: 16px; }
+.card-title a { font-size: 11px; color: var(--text-muted); cursor: pointer; transition: color 0.18s; float: right; font-family: 'Jost', sans-serif; letter-spacing: 0; text-transform: none; }
+.card-title a:hover { color: var(--text); }
+.no-data { text-align: center; padding: 44px 20px; color: var(--text-muted); font-size: 13px; font-weight: 300; }
+.loading-msg { text-align: center; padding: 28px; color: var(--text-muted); font-size: 12px; }
+
+/* ════ TABLE ════ */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+thead { background: var(--noir-3); }
+th { text-align: left; padding: 10px 14px; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); white-space: nowrap; font-weight: 400; }
+td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-weight: 300; color: var(--text); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: rgba(255,255,255,0.018); }
+.td-primary { font-weight: 400; font-size: 13px; line-height: 1.3; }
+.td-secondary { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ════ BADGES ════ */
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 400; border-radius: 20px; white-space: nowrap; }
+.badge-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.badge-pending   { background: rgba(123,159,204,0.12); color: var(--c-pending);   border: 1px solid rgba(123,159,204,0.22); }
+.badge-pending   .badge-dot { background: var(--c-pending); }
+.badge-confirmed { background: rgba(98,176,122,0.12);  color: var(--c-confirmed); border: 1px solid rgba(98,176,122,0.22); }
+.badge-confirmed .badge-dot { background: var(--c-confirmed); }
+.badge-completed { background: rgba(196,150,58,0.12);  color: var(--c-completed); border: 1px solid rgba(196,150,58,0.22); }
+.badge-completed .badge-dot { background: var(--c-completed); }
+.badge-cancelled { background: rgba(194,88,112,0.12);  color: var(--c-cancelled); border: 1px solid rgba(194,88,112,0.22); }
+.badge-cancelled .badge-dot { background: var(--c-cancelled); }
+.badge-no_show   { background: rgba(120,120,120,0.1);  color: var(--c-noshow);    border: 1px solid rgba(120,120,120,0.18); }
+.badge-no_show   .badge-dot { background: var(--c-noshow); }
+
+/* ════ ACTION BUTTONS ════ */
+.act-btn { padding: 4px 10px; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border: 1px solid var(--border-2); background: transparent; color: var(--text-muted); font-family: 'Jost', sans-serif; transition: all 0.16s; border-radius: 2px; white-space: nowrap; }
+.act-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.18); }
+.act-btn.confirm  { border-color: rgba(98,176,122,0.3);   color: var(--c-confirmed); }
+.act-btn.confirm:hover  { background: rgba(98,176,122,0.1); }
+.act-btn.cancel   { border-color: rgba(194,88,112,0.3);   color: var(--c-cancelled); }
+.act-btn.cancel:hover   { background: rgba(194,88,112,0.1); }
+.act-btn.complete { border-color: rgba(196,150,58,0.3);   color: var(--c-completed); }
+.act-btn.complete:hover { background: var(--gold-dim); }
+.act-btn.noshow   { border-color: rgba(120,120,120,0.25); color: var(--c-noshow); }
+.act-btn.noshow:hover   { background: rgba(120,120,120,0.08); }
+.action-btns { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+
+/* ════ STAT CARDS ════ */
+.stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+@media(max-width:900px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+@media(max-width:480px) { .stats-row { grid-template-columns: 1fr; } }
+.stat-card { background: var(--noir-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px 16px; transition: border-color 0.2s; position: relative; overflow: hidden; }
+.stat-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: transparent; transition: background 0.2s; }
+.stat-card:hover { border-color: var(--border-2); }
+.stat-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.stat-card-label { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); }
+.stat-card-icon { font-size: 16px; opacity: 0.5; }
+.stat-card-num { font-family: 'Cormorant Garamond', serif; font-size: 42px; font-weight: 300; line-height: 1; color: var(--text); }
+.stat-card-sub { font-size: 10px; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.5px; }
+.stat-gold .stat-card-num { color: var(--gold); }
+.stat-gold::after { background: var(--gold); }
+.stat-rose .stat-card-num { color: var(--rose); }
+.stat-rose::after { background: var(--rose); }
+.stat-green .stat-card-num { color: var(--c-confirmed); }
+.stat-green::after { background: var(--c-confirmed); }
+
+/* ════ DASHBOARD ════ */
+.dash-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; }
+@media(max-width:960px) { .dash-grid { grid-template-columns: 1fr; } }
+.appt-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.appt-row:last-child { border-bottom: none; }
+.appt-date-block { width: 40px; height: 40px; flex-shrink: 0; background: var(--gold-dim); border: 1px solid var(--gold-border); border-radius: 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.appt-date-day   { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 400; color: var(--gold); line-height: 1; }
+.appt-date-month { font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); }
+.appt-info { flex: 1; min-width: 0; }
+.appt-name { font-size: 13px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.appt-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.appt-right { text-align: right; flex-shrink: 0; }
+.appt-time { font-size: 11px; color: var(--gold); margin-bottom: 3px; }
+
+/* ════ FILTER BAR ════ */
+.filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+.filter-input { flex: 1; min-width: 180px; padding: 8px 12px; background: var(--noir-2); border: 1px solid var(--border-2); color: var(--text); font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 300; outline: none; transition: border-color 0.2s; border-radius: var(--radius); }
+.filter-input:focus { border-color: var(--gold-border); }
+.filter-input::placeholder { color: var(--text-muted); }
+.filter-select { padding: 8px 10px; background: var(--noir-2); border: 1px solid var(--border-2); color: var(--text); font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 300; outline: none; transition: border-color 0.2s; border-radius: var(--radius); cursor: pointer; }
+.filter-select:focus { border-color: var(--gold-border); }
+.filter-select option { background: #1a1210; color: var(--text); }
+.filter-tabs { display: flex; gap: 3px; }
+.filter-tab { padding: 5px 13px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-family: 'Jost', sans-serif; font-size: 10px; letter-spacing: 1px; cursor: pointer; transition: all 0.16s; border-radius: 2px; }
+.filter-tab:hover { border-color: var(--gold-border); color: var(--gold); }
+.filter-tab.active { background: var(--gold-dim); border-color: var(--gold-border); color: var(--gold); }
+
+/* ════ AUTO-APPROVE BANNER ════ */
+.auto-banner { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: var(--radius); font-size: 12px; font-weight: 300; }
+.auto-banner.on  { background: rgba(98,176,122,0.07);  border: 1px solid rgba(98,176,122,0.18);  color: var(--c-confirmed); }
+.auto-banner.off { background: rgba(123,159,204,0.07); border: 1px solid rgba(123,159,204,0.15); color: var(--c-pending); }
+
+/* ════ CALENDAR ════ */
+.cal-page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
+.cal-page-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; }
+.cal-page-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.cal-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cal-view-btn { padding: 6px 13px; background: transparent; border: 1px solid var(--border-2); color: var(--text-muted); font-family: 'Jost', sans-serif; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.18s; border-radius: 2px; }
+.cal-view-btn.active { background: var(--gold-dim); border-color: var(--gold-border); color: var(--gold); }
+.cal-view-btn:hover:not(.active) { border-color: var(--border-2); color: var(--text-2); }
+.cal-divider { width: 1px; height: 20px; background: var(--border); }
+.staff-filter-strip { display: flex; gap: 5px; flex-wrap: wrap; }
+.sfs-btn { padding: 5px 11px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-family: 'Jost', sans-serif; font-size: 10px; letter-spacing: 1px; cursor: pointer; transition: all 0.16s; border-radius: 2px; }
+.sfs-btn:hover { border-color: var(--gold-border); color: var(--gold); }
+.sfs-btn.active { background: var(--gold-dim); border-color: var(--gold-border); color: var(--gold); }
+.month-grid-wrap { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.month-grid-head { display: grid; grid-template-columns: repeat(7,1fr); background: var(--noir-3); border-bottom: 1px solid var(--border); }
+.month-grid-head span { padding: 9px 4px; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); text-align: center; }
+.month-grid { display: grid; grid-template-columns: repeat(7,1fr); background: var(--border); gap: 1px; }
+.month-cell { min-height: 96px; background: var(--noir-2); padding: 8px 7px; cursor: pointer; transition: background 0.15s; }
+.month-cell:hover { background: var(--noir-3); }
+.month-cell.today { background: rgba(196,150,58,0.055); }
+.month-cell.today .mc-day { color: var(--gold); font-weight: 500; }
+.month-cell.other-month { opacity: 0.28; pointer-events: none; }
+.mc-day { font-size: 12px; color: var(--text-2); margin-bottom: 5px; }
+.mc-event { font-size: 10px; padding: 2px 6px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 2px; display: flex; align-items: center; gap: 4px; }
+.mc-event-dot { width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
+.mc-event.pending   { background: rgba(123,159,204,0.15); color: var(--c-pending); }
+.mc-event.confirmed { background: rgba(98,176,122,0.15);  color: var(--c-confirmed); }
+.mc-event.completed { background: rgba(196,150,58,0.15);  color: var(--c-completed); }
+.mc-event.cancelled { background: rgba(194,88,112,0.12);  color: var(--c-cancelled); text-decoration: line-through; opacity: 0.6; }
+.mc-event.no_show   { background: rgba(120,120,120,0.12); color: var(--c-noshow); opacity: 0.7; }
+.mc-more { font-size: 10px; color: var(--text-muted); padding: 1px 5px; }
+.day-view-wrap { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.day-view-header { padding: 14px 18px; background: var(--noir-2); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.day-view-date { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; }
+.day-view-count { font-size: 11px; color: var(--text-muted); }
+.day-view-body { display: grid; grid-template-columns: 52px 1fr; background: var(--noir); }
+.day-time-label { height: 60px; display: flex; align-items: flex-start; justify-content: flex-end; padding: 7px 10px 0 0; font-size: 9.5px; color: var(--text-muted); letter-spacing: 0.5px; }
+.day-events-col { position: relative; border-left: 1px solid var(--border); }
+.day-hour-slot { height: 60px; border-bottom: 1px solid var(--border); }
+.now-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--rose); z-index: 5; pointer-events: none; }
+.now-line::before { content: ''; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: var(--rose); }
+.day-appt-block { position: absolute; left: 5px; right: 5px; border-radius: 3px; padding: 6px 8px; overflow: hidden; cursor: pointer; transition: filter 0.15s; z-index: 4; border-left-width: 3px; border-left-style: solid; }
+.day-appt-block:hover { filter: brightness(1.12); }
+.day-appt-block.pending   { background: rgba(123,159,204,0.13); border-left-color: var(--c-pending); }
+.day-appt-block.confirmed { background: rgba(98,176,122,0.13);  border-left-color: var(--c-confirmed); }
+.day-appt-block.completed { background: rgba(196,150,58,0.12);  border-left-color: var(--c-completed); }
+.day-appt-block.cancelled { background: rgba(194,88,112,0.1);   border-left-color: var(--c-cancelled); opacity: 0.55; }
+.day-appt-block.no_show   { background: rgba(120,120,120,0.08); border-left-color: var(--c-noshow); opacity: 0.55; }
+.dab-name { font-size: 11.5px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+.dab-svc  { font-size: 10px; opacity: 0.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+.dab-actions { display: flex; gap: 3px; margin-top: 5px; flex-wrap: wrap; }
+.dab-btn { padding: 2px 7px; font-size: 9px; letter-spacing: 0.8px; border-radius: 2px; cursor: pointer; font-family: 'Jost', sans-serif; border: none; transition: opacity 0.15s; text-transform: uppercase; }
+.dab-btn:hover { opacity: 0.8; }
+.dab-btn.confirm  { background: var(--c-confirmed); color: #0C0908; }
+.dab-btn.cancel   { background: var(--c-cancelled); color: #fff; }
+.dab-btn.complete { background: var(--c-completed); color: #0C0908; }
+.dab-btn.noshow   { background: var(--c-noshow); color: #fff; }
+
+/* ════ DAY SIDEBAR ════ */
+.day-sidebar { position: fixed; top: 0; right: -440px; width: 420px; height: 100vh; background: var(--noir-2); border-left: 1px solid var(--gold-border); z-index: 300; transition: right 0.3s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; }
+.day-sidebar.open { right: 0; }
+.day-sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 299; display: none; backdrop-filter: blur(2px); }
+.day-sidebar-overlay.open { display: block; }
+.dsh-header { padding: 20px 22px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; flex-shrink: 0; }
+.dsh-date { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; line-height: 1.15; }
+.dsh-sub  { font-size: 10px; color: var(--text-muted); letter-spacing: 1.5px; margin-top: 4px; text-transform: uppercase; }
+.close-btn { background: transparent; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 2px 4px; line-height: 1; transition: color 0.15s; }
+.close-btn:hover { color: var(--text); }
+.dsh-body { flex: 1; padding: 14px 18px; overflow-y: auto; }
+.dsh-footer { padding: 14px 18px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.dsh-add-btn { width: 100%; padding: 11px; background: var(--gold); color: var(--noir); border: none; font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: background 0.2s; border-radius: var(--radius); }
+.dsh-add-btn:hover { background: var(--gold-light); }
+.day-appt-card { background: var(--noir-3); border: 1px solid var(--border); border-radius: 3px; padding: 13px 15px; margin-bottom: 8px; border-left-width: 3px; border-left-style: solid; transition: border-color 0.15s; }
+.day-appt-card.pending   { border-left-color: var(--c-pending); }
+.day-appt-card.confirmed { border-left-color: var(--c-confirmed); }
+.day-appt-card.completed { border-left-color: var(--c-completed); }
+.day-appt-card.cancelled { border-left-color: var(--c-cancelled); opacity: 0.65; }
+.day-appt-card.no_show   { border-left-color: var(--c-noshow); opacity: 0.65; }
+.dac-time   { font-size: 11px; color: var(--gold); font-weight: 300; margin-bottom: 4px; }
+.dac-name   { font-size: 14px; font-weight: 400; line-height: 1.2; }
+.dac-detail { font-size: 11px; color: var(--text-muted); margin-top: 3px; line-height: 1.4; }
+.dac-actions { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
+
+/* ════ MODALS ════ */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; place-items: center; z-index: 200; backdrop-filter: blur(3px); }
+.modal-overlay.open { display: grid; }
+.modal { background: var(--noir-2); border: 1px solid var(--gold-border); border-radius: var(--radius); padding: 32px 34px; width: 100%; max-width: 460px; margin: 20px; animation: fadeUp 0.22s ease; max-height: 92vh; overflow-y: auto; }
+.modal-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 300; margin-bottom: 22px; }
+.modal-field { margin-bottom: 13px; }
+.modal-label { display: block; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+.modal-input { width: 100%; padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-2); color: var(--text); font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 300; outline: none; transition: border-color 0.2s; border-radius: var(--radius); }
+.modal-input:focus { border-color: var(--gold-border); background: rgba(255,255,255,0.055); }
+.modal-input option { background: #1a1210; color: var(--text); }
+.modal-input[readonly] { opacity: 0.45; cursor: default; }
+textarea.modal-input { resize: vertical; min-height: 68px; }
+.modal-row { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.modal-divider { height: 1px; background: var(--border); margin: 16px 0 14px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.modal-btn { flex: 1; padding: 11px; font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border: none; transition: all 0.2s; border-radius: var(--radius); }
+.modal-btn-primary { background: var(--gold); color: var(--noir); }
+.modal-btn-primary:hover { background: var(--gold-light); }
+.modal-btn-cancel  { background: transparent; border: 1px solid var(--border-2); color: var(--text-muted); }
+.modal-btn-cancel:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+.modal-err { font-size: 11px; color: var(--c-cancelled); margin-top: 8px; display: none; line-height: 1.4; }
+.modal-err.show { display: block; }
+.modal-hint { font-size: 11px; color: var(--text-muted); margin-top: 8px; line-height: 1.6; }
+.avatar-upload-area { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 0 4px; }
+.avatar-upload-circle { width: 72px; height: 72px; border-radius: 50%; background: var(--gold-dim); border: 2px dashed var(--gold-border); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; transition: border-color 0.2s; position: relative; font-family: 'Cormorant Garamond', serif; font-size: 28px; color: var(--gold); }
+.avatar-upload-circle:hover { border-color: var(--gold); }
+.avatar-upload-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.avatar-upload-circle .upload-icon-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.18s; border-radius: 50%; font-size: 18px; font-family: 'Jost', sans-serif; color: #fff; }
+.avatar-upload-circle:hover .upload-icon-overlay { opacity: 1; }
+.avatar-upload-label { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; }
+
+/* ════ SETTINGS ════ */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media(max-width:760px){ .settings-grid { grid-template-columns: 1fr; } }
+.settings-toggle { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--border); }
+.settings-toggle:last-child { border-bottom: none; padding-bottom: 0; }
+.st-label { font-size: 12.5px; font-weight: 400; }
+.st-desc  { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+.toggle-switch { position: relative; width: 42px; height: 22px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-slider { position: absolute; inset: 0; background: rgba(255,255,255,0.08); border: 1px solid var(--border-2); cursor: pointer; transition: all 0.28s; border-radius: 11px; }
+.toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; background: var(--text-muted); top: 2px; left: 2px; border-radius: 50%; transition: all 0.28s; }
+.toggle-switch input:checked + .toggle-slider { background: var(--gold-dim); border-color: var(--gold-border); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); background: var(--gold); }
+
+/* ════ NOTIFICATION LOG ════ */
+.log-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.log-item:last-child { border-bottom: none; }
+.log-icon { font-size: 15px; width: 22px; text-align: center; flex-shrink: 0; }
+.log-info { flex: 1; min-width: 0; }
+.log-desc { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.log-time { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+.log-status { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0; }
+.log-sent   { color: var(--c-confirmed); }
+.log-failed { color: var(--c-cancelled); }
+
+/* ════ TOAST ════ */
+.toast { position: fixed; bottom: 22px; right: 22px; background: var(--noir-3); border: 1px solid var(--border-2); border-radius: var(--radius); padding: 11px 16px; font-size: 12px; font-weight: 300; z-index: 9999; max-width: 260px; display: none; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+.toast.show { display: block; animation: toastIn 0.28s ease; }
+.toast.success { border-left: 3px solid var(--c-confirmed); }
+.toast.error   { border-left: 3px solid var(--c-cancelled); }
+.toast.info    { border-left: 3px solid var(--gold); }
+
+/* ════ READ-ONLY CARD ════ */
+.readonly-card { opacity: 0.72; }
+.readonly-card .dac-name { color: var(--text-2); }
+
+/* ════ SHIMMER ════ */
+.shimmer { background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 2px; display: inline-block; height: 3px; width: 44px; vertical-align: middle; margin-top: 20px; }
+@keyframes shimmer { 0%{background-position:200% 0}100%{background-position:-200% 0} }
+
+/* ════ ANIMATIONS ════ */
+@keyframes fadeUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+@keyframes toastIn { from{opacity:0;transform:translateY(6px)}  to{opacity:1;transform:translateY(0)} }
+
+/* ════ BOOKING CALENDAR ════ */
+.bk-cal-wrap { border: 1px solid var(--border-2); border-radius: var(--radius); padding: 14px; background: rgba(255,255,255,0.025); }
+.bk-cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.bk-cal-month { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 300; color: var(--text); }
+.bk-cal-nav-btn { background: transparent; border: 1px solid var(--border-2); color: var(--text-muted); padding: 3px 9px; cursor: pointer; font-size: 14px; transition: all 0.15s; border-radius: 2px; }
+.bk-cal-nav-btn:hover { border-color: var(--gold-border); color: var(--gold); }
+.bk-cal-days-head { display: grid; grid-template-columns: repeat(7,1fr); margin-bottom: 4px; }
+.bk-cal-days-head span { font-size: 9px; letter-spacing: 1.5px; color: var(--text-muted); text-align: center; padding: 3px 0; text-transform: uppercase; }
+.bk-cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+.bk-cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 300; cursor: pointer; border-radius: 50%; transition: all 0.12s; color: var(--text); border: 1px solid transparent; }
+.bk-cal-day:hover:not(.bk-cd-disabled):not(.bk-cd-empty) { background: var(--gold-dim); color: var(--gold); border-color: var(--gold-border); }
+.bk-cal-day.bk-cd-today { color: var(--gold); font-weight: 500; }
+.bk-cal-day.bk-cd-selected { background: var(--gold); color: var(--noir); border-color: var(--gold); }
+.bk-cal-day.bk-cd-disabled { color: var(--text-muted); opacity: 0.3; cursor: default; }
+.bk-cal-day.bk-cd-empty { cursor: default; }
+.bk-time-wrap { border: 1px solid var(--border-2); border-radius: var(--radius); padding: 14px; background: rgba(255,255,255,0.025); display: flex; flex-direction: column; }
+.bk-time-label { font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+.bk-time-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 5px; overflow-y: auto; max-height: 210px; flex: 1; }
+.bk-time-slot { border: 1px solid var(--border-2); padding: 7px 4px; text-align: center; font-size: 11px; cursor: pointer; transition: all 0.12s; font-family: 'Jost', sans-serif; font-weight: 300; color: var(--text-2); border-radius: 2px; }
+.bk-time-slot:hover { border-color: var(--gold-border); color: var(--gold); }
+.bk-time-slot.bk-ts-selected { background: var(--gold); color: var(--noir); border-color: var(--gold); }
+.bk-time-slot.bk-ts-unavail { opacity: 0.2; cursor: not-allowed; background: rgba(255,255,255,0.02); }
+.bk-dt-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media(max-width:480px) { .bk-dt-layout { grid-template-columns: 1fr; } }
+
+/* ════ MOBILE ════ */
+@media(max-width:768px){
+  .sidebar { position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .page { padding: 14px 16px 24px; }
+  .main-header { padding: 0 16px; }
+  .dash-grid { grid-template-columns: 1fr; }
+  .day-sidebar { width: 100%; right: -100%; }
+  .modal { padding: 24px 18px; margin: 12px; }
+  .modal-row { grid-template-columns: 1fr; }
+}
+.mobile-menu-btn { display: none; background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 5px 9px; cursor: pointer; font-size: 14px; border-radius: var(--radius); }
+@media(max-width:768px){ .mobile-menu-btn { display: flex; } }
+
+/* ════ SESSION EXPIRY BANNER ════ */
+.session-warning { position: fixed; top: 0; left: 0; right: 0; z-index: 999; background: rgba(196,150,58,0.12); border-bottom: 1px solid var(--gold-border); padding: 8px 20px; font-size: 12px; color: var(--gold); text-align: center; display: none; }
+.session-warning.show { display: block; }
+:root { --safe-bottom: env(safe-area-inset-bottom, 0px); --safe-top: env(safe-area-inset-top, 0px); }
+* { -webkit-tap-highlight-color: transparent; }
+body { -webkit-font-smoothing: antialiased; }
+input, select, textarea { -webkit-text-size-adjust: 100%; font-size: 16px !important; }
+
+@media(max-width:768px) {
+  .sidebar { display: none !important; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 200; height: calc(60px + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: rgba(12,9,8,.96); backdrop-filter: blur(20px) saturate(1.5); border-top: 1px solid rgba(237,229,223,0.12); display: flex; align-items: flex-start; padding-top: 8px; }
+  .bn-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 2px; cursor: pointer; position: relative; }
+  .bn-icon { font-size: 19px; line-height: 1; transition: transform .18s; }
+  .bn-label { font-size: 8.5px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(237,229,223,0.38); transition: color .18s; }
+  .bn-item.active .bn-label { color: var(--gold); }
+  .bn-item.active .bn-icon { transform: scale(1.12); }
+  .bn-dot { position: absolute; top: 2px; right: calc(50% - 18px); width: 7px; height: 7px; border-radius: 50%; background: var(--rose); border: 1.5px solid var(--noir); display: none; }
+  .bn-dot.show { display: block; }
+  .main-header { height: calc(52px + var(--safe-top)); padding-top: var(--safe-top); padding-left: 14px; padding-right: 14px; }
+  .main-title { font-size: 20px; }
+  .mobile-menu-btn { display: none !important; }
+  .main-content { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .page { padding-bottom: calc(70px + var(--safe-bottom)); }
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { padding: 14px 12px 12px; }
+  .stat-card-num { font-size: 36px; }
+  .stat-card-icon { display: none; }
+  .table-wrap { border: none; background: transparent; overflow: visible; }
+  .table-wrap table, thead { display: none; }
+  .table-wrap tbody { display: flex; flex-direction: column; gap: 10px; }
+  .table-wrap tbody tr { display: block; background: var(--noir-2); border: 1px solid var(--border-2); border-radius: 10px; padding: 14px 16px; border-left-width: 3px; border-left-style: solid; border-left-color: var(--border-2); }
+  .table-wrap tbody tr:has(.badge-pending)   { border-left-color: var(--c-pending); }
+  .table-wrap tbody tr:has(.badge-confirmed) { border-left-color: var(--c-confirmed); }
+  .table-wrap tbody tr:has(.badge-completed) { border-left-color: var(--c-completed); }
+  .table-wrap tbody tr:has(.badge-cancelled) { border-left-color: var(--c-cancelled); }
+  .table-wrap tbody tr:has(.badge-no_show)   { border-left-color: var(--c-noshow); }
+  .table-wrap tbody td { display: block; padding: 0; border: none; font-size: 13px; }
+  .table-wrap tbody td:nth-child(1) { margin-bottom: 6px; }
+  .table-wrap tbody td:nth-child(3) { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .table-wrap tbody td:nth-child(3) .td-secondary { color: var(--gold); font-size: 11px; }
+  .table-wrap tbody td:nth-child(4) { font-size: 11px; color: rgba(237,229,223,0.5); margin-bottom: 6px; }
+  .table-wrap tbody td:nth-child(5) { margin-bottom: 10px; }
+  .act-btn { padding: 8px 14px; font-size: 11px; border-radius: 6px; }
+  .act-btn.confirm  { background: rgba(98,176,122,.12); }
+  .act-btn.cancel   { background: rgba(194,88,112,.1); }
+  .act-btn.complete { background: rgba(196,150,58,.1); }
+  .filter-bar { flex-wrap: wrap; gap: 8px; padding: 0 14px 10px; }
+  .filter-input { min-width: 100%; padding: 12px 14px; border-radius: 8px; }
+  .filter-select { flex: 1; padding: 10px 12px; border-radius: 8px; }
+  .filter-tabs { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; }
+  .filter-tab { padding: 7px 14px; white-space: nowrap; flex-shrink: 0; border-radius: 6px; }
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal { max-width: 100%; width: 100%; margin: 0; border-radius: 20px 20px 0 0; border-bottom: none; padding: 8px 20px calc(24px + var(--safe-bottom)); max-height: 92dvh; animation: slideUp .35s cubic-bezier(.32,0,.15,1); }
+  .modal::before { content: ''; display: block; width: 40px; height: 4px; background: rgba(255,255,255,.12); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-row { grid-template-columns: 1fr; gap: 10px; }
+  .modal-input { padding: 13px 14px; border-radius: 8px; }
+  .modal-btn { padding: 14px; border-radius: 8px; }
+  .bk-dt-layout { grid-template-columns: 1fr; }
+  .day-sidebar { width: 100%; right: -100%; border-radius: 20px 20px 0 0; top: auto; bottom: 0; height: 90dvh; }
+  .month-cell { min-height: 64px; padding: 5px 4px; }
+  .mc-event { font-size: 9px; padding: 2px 4px; }
+  .cal-page-header { flex-direction: column; gap: 10px; }
+  .cal-controls { width: 100%; flex-wrap: wrap; gap: 6px; }
+  .settings-grid { grid-template-columns: 1fr; }
+  .dash-grid { grid-template-columns: 1fr; }
+  #page-bookings .filter-bar { padding: 12px 14px 8px; margin-bottom: 0; }
+  #page-bookings .table-wrap { padding: 0 14px; }
+  #page-services .table-wrap, #page-staff .table-wrap { padding: 0 14px; }
+  #page-settings > div { padding: 0 14px; max-width: 100%; }
+  #page-promotions { padding: 0 14px; }
+  #page-promotions > div:first-child { grid-template-columns: 1fr; }
+}
+@keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="session-warning" id="session-warning">
+  ⚠ Your session will expire soon due to inactivity.
+  <button onclick="resetSessionTimer()" style="margin-left:10px;background:var(--gold);color:var(--noir);border:none;padding:2px 10px;font-family:'Jost',sans-serif;font-size:10px;letter-spacing:1px;cursor:pointer;border-radius:2px;">Stay Signed In</button>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Luxe<span>.</span>Nails</div>
+    <div class="login-sub">Staff Portal</div>
+    <div style="text-align:left">
+      <div class="login-field">
+        <label class="login-label">Email Address</label>
+        <input type="email" class="login-input" id="login-email" placeholder="you@salon.com" autocomplete="email">
+      </div>
+      <div class="login-field">
+        <label class="login-label">Password</label>
+        <input type="password" class="login-input" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+    <button class="login-btn" onclick="doLogin()" id="login-btn">Sign In</button>
+    <button class="login-forgot" onclick="showForgotScreen()">Forgot password?</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD SCREEN -->
+<div id="forgot-screen">
+  <div class="login-card">
+    <button class="back-link" onclick="showLoginScreen()">← Back to Sign In</button>
+    <div class="login-logo">Luxe<span>.</span>Nails</div>
+    <div class="login-sub">Reset Password</div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:24px;line-height:1.7;text-align:left">
+      Enter your staff email address and we'll send you a secure link to reset your password.
+    </p>
+    <div style="text-align:left">
+      <div class="login-field">
+        <label class="login-label">Email Address</label>
+        <input type="email" class="login-input" id="forgot-email" placeholder="you@salon.com"
+               autocomplete="email" onkeydown="if(event.key==='Enter')doForgotPassword()">
+      </div>
+    </div>
+    <button class="login-btn" onclick="doForgotPassword()" id="forgot-btn">Send Reset Link</button>
+    <div class="reset-success" id="forgot-success">
+      ✓ If that email belongs to a staff account, a reset link is on its way. Check your inbox and spam folder — the link expires in 1 hour.
+    </div>
+    <div class="login-err" id="forgot-err"></div>
+  </div>
+</div>
+
+<!-- RESET PASSWORD SCREEN (user arrives here after clicking email link) -->
+<div id="reset-screen">
+  <div class="login-card">
+    <div class="login-logo">Luxe<span>.</span>Nails</div>
+    <div class="login-sub">Set New Password</div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:24px;line-height:1.7;text-align:left">
+      Choose a strong new password for your account. Min. 8 characters, one uppercase letter, one number.
+    </p>
+    <div style="text-align:left">
+      <div class="login-field">
+        <label class="login-label">New Password</label>
+        <input type="password" class="login-input" id="reset-pass" placeholder="••••••••"
+               autocomplete="new-password" oninput="checkPwStrength(this.value)">
+        <div class="pw-strength"><div class="pw-strength-bar" id="pw-strength-bar"></div></div>
+        <div class="pw-strength-label" id="pw-strength-label"></div>
+      </div>
+      <div class="login-field" style="margin-top:8px">
+        <label class="login-label">Confirm Password</label>
+        <input type="password" class="login-input" id="reset-confirm" placeholder="••••••••"
+               autocomplete="new-password" onkeydown="if(event.key==='Enter')doResetPassword()">
+      </div>
+    </div>
+    <button class="login-btn" onclick="doResetPassword()" id="reset-btn">Update Password</button>
+    <div class="reset-success" id="reset-success">
+      ✓ Password updated successfully! Redirecting to sign in…
+    </div>
+    <div class="login-err" id="reset-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">Luxe<span>.</span>Nails</div>
+      <div class="logo-role" id="user-role-label">Staff Portal</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Overview</div>
+      <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">◈</span> Dashboard</div>
+      <div class="nav-section-title">Bookings</div>
+      <div class="nav-item" onclick="showPage('bookings')"><span class="nav-icon">📋</span> All Bookings <span class="nav-badge" id="pending-badge" style="display:none">0</span></div>
+      <div class="nav-item" onclick="showPage('calendar')"><span class="nav-icon">📅</span> Calendar</div>
+      <div id="nav-management" style="display:none">
+          <div class="nav-item" onclick="showPage('promotions')"><span class="nav-icon">🎁</span> Promotions</div>
+        <div class="nav-section-title">Management</div>
+        <div class="nav-item" onclick="showPage('services')"><span class="nav-icon">✦</span> Services</div>
+        <div class="nav-item" onclick="showPage('staff')"><span class="nav-icon">👥</span> Team</div>
+        <div class="nav-item" onclick="showPage('blocks')"><span class="nav-icon">🚫</span> Time Blocks</div>        <div class="nav-item" onclick="showPage('audit')"><span class="nav-icon">📋</span> Audit Log</div>
+        <div class="nav-item" onclick="showPage('settings')"><span class="nav-icon">⚙️</span> Settings</div>
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="user-row">
+        <div class="user-avatar" id="user-avatar" onclick="document.getElementById('sidebar-avatar-file').click()" title="Change photo">
+          <span class="user-avatar-overlay">✎</span>
+        </div>
+        <input type="file" id="sidebar-avatar-file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadSidebarAvatar(event)">
+        <div class="user-info">
+          <div class="user-name" id="user-name">—</div>
+          <div class="user-role-text" id="user-role">—</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="main-header">
+      <div class="main-header-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="main-title" id="page-title">Dashboard</div>
+        <div class="header-pill" id="auto-approve-pill" style="display:none">Auto-Approve ON</div>
+      </div>
+      <div class="header-actions">
+        <div class="header-date" id="header-date"></div>
+        <button class="icon-btn" onclick="refreshPage()" title="Refresh">↺</button>
+        <button class="add-btn" onclick="openModal('booking')" id="header-add-btn" style="display:none">+ New</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-row">
+        <div class="stat-card stat-gold">
+          <div class="stat-card-top"><div class="stat-card-label">Today</div><div class="stat-card-icon">📅</div></div>
+          <div class="stat-card-num" id="stat-today"><span class="shimmer"></span></div>
+          <div class="stat-card-sub">appointments</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-top"><div class="stat-card-label">Pending</div><div class="stat-card-icon">⏳</div></div>
+          <div class="stat-card-num" id="stat-pending"><span class="shimmer"></span></div>
+          <div class="stat-card-sub">need review</div>
+        </div>
+        <div class="stat-card stat-rose">
+          <div class="stat-card-top"><div class="stat-card-label">This Week</div><div class="stat-card-icon">📊</div></div>
+          <div class="stat-card-num" id="stat-week"><span class="shimmer"></span></div>
+          <div class="stat-card-sub">total bookings</div>
+        </div>
+        <div class="stat-card stat-green">
+          <div class="stat-card-top"><div class="stat-card-label">This Month</div><div class="stat-card-icon">✦</div></div>
+          <div class="stat-card-num" id="stat-month"><span class="shimmer"></span></div>
+          <div class="stat-card-sub">total bookings</div>
+        </div>
+      </div>
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-title">Upcoming Appointments <a onclick="showPage('bookings')">View all →</a></div>
+          <div id="upcoming-list"><div class="loading-msg">Loading…</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Today's Schedule <a onclick="showPage('calendar')">Day view →</a></div>
+          <div id="today-list"><div class="loading-msg">Loading…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOKINGS -->
+    <div class="page" id="page-bookings">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap">
+        <div class="auto-banner off" id="bk-auto-banner" style="flex:1;min-width:200px"></div>
+        <button class="btn-primary" onclick="openModal('booking')" id="bk-add-btn" style="display:none">+ Add Appointment</button>
+      </div>
+      <div class="filter-bar">
+        <input class="filter-input" type="text" id="search-input" placeholder="Search by name or email…" oninput="filterBookings()">
+        <select class="filter-select" id="staff-filter" onchange="filterBookings()"><option value="">All Staff</option></select>
+        <select class="filter-select" id="date-filter" onchange="filterBookings()">
+          <option value="">All Dates</option>
+          <option value="today">Today</option>
+          <option value="tomorrow">Tomorrow</option>
+          <option value="week">This Week</option>
+          <option value="past">Past</option>
+        </select>
+        <div class="filter-tabs">
+          <button class="filter-tab active" onclick="setStatusFilter('')" data-s="">All</button>
+          <button class="filter-tab" onclick="setStatusFilter('pending')" data-s="pending">Pending</button>
+          <button class="filter-tab" onclick="setStatusFilter('confirmed')" data-s="confirmed">Confirmed</button>
+          <button class="filter-tab" onclick="setStatusFilter('completed')" data-s="completed">Done</button>
+          <button class="filter-tab" onclick="setStatusFilter('cancelled')" data-s="cancelled">Cancelled</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Client</th><th>Service</th><th>Date &amp; Time</th><th>Staff</th><th>Status</th><th>Quick Actions</th></tr></thead>
+          <tbody id="bookings-tbody"><tr><td colspan="6" class="loading-msg">Loading bookings…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="page" id="page-calendar">
+      <div class="cal-page-header">
+        <div>
+          <div class="cal-page-title" id="cal-page-title">April 2026</div>
+          <div class="cal-page-sub" id="cal-page-sub"></div>
+        </div>
+        <div class="cal-controls">
+          <div class="staff-filter-strip" id="cal-staff-filter"></div>
+          <div class="cal-divider"></div>
+          <button class="cal-view-btn active" id="btn-month" onclick="setCalView('month')">Month</button>
+          <button class="cal-view-btn" id="btn-day" onclick="setCalView('day')">Day</button>
+          <div class="cal-divider"></div>
+          <button class="act-btn" onclick="calNav(-1)">← Prev</button>
+          <button class="act-btn" onclick="calNav(1)">Next →</button>
+          <button class="act-btn" onclick="calGoToday()">Today</button>
+        </div>
+      </div>
+      <div id="cal-container"></div>
+    </div>
+
+    <!-- SERVICES -->
+    <div class="page" id="page-services">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300">Services</div>
+        <button class="btn-primary" onclick="openModal('service')">+ Add Service</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Category</th><th>Duration</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="services-tbody"><tr><td colspan="6" class="loading-msg">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- STAFF -->
+    <div class="page" id="page-staff">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300">Team</div>
+        <button class="btn-primary" onclick="resetStaffModal();openModal('staff')">+ Add Staff Member</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
+          <tbody id="staff-tbody"><tr><td colspan="4" class="loading-msg">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- BLOCK TIME MODAL -->
+<div class="modal-overlay" id="block-modal">
+  <div class="modal">
+    <div class="modal-title">Block Staff Hours</div>
+    <div class="modal-field">
+      <label class="modal-label">Staff Member</label>
+      <select class="modal-input" id="blk-staff"></select>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label class="modal-label">Date</label>
+        <input class="modal-input" id="blk-date" type="date">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Reason (optional)</label>
+        <input class="modal-input" id="blk-reason" type="text" placeholder="Sick, late start, vacation…">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label class="modal-label">Block From</label>
+        <input class="modal-input" id="blk-start" type="time" value="09:00">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Block Until</label>
+        <input class="modal-input" id="blk-end" type="time" value="13:00">
+      </div>
+    </div>
+    <p class="modal-hint">All-day? Set from 00:00 to 23:59. Existing bookings in this window are <strong>not</strong> auto-cancelled.</p>
+    <div class="modal-err" id="blk-err"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal('block')">Cancel</button>
+      <button class="modal-btn modal-btn-primary" onclick="saveBlock()">Save Block</button>
+    </div>
+  </div>
+</div>
+    
+    <!-- BLOCKS -->
+<div class="page" id="page-blocks">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300">Staff Time Blocks</div>
+    <button class="btn-primary" onclick="openBlockModal()">+ Block Hours</button>
+  </div>
+  <div class="filter-bar" style="margin-bottom:14px">
+    <select class="filter-select" id="blk-filter-staff" onchange="loadBlocks()">
+      <option value="">All Staff</option>
+    </select>
+    <input class="filter-input" type="date" id="blk-filter-date" onchange="loadBlocks()" style="max-width:180px">
+    <button class="act-btn" onclick="document.getElementById('blk-filter-date').value='';document.getElementById('blk-filter-staff').value='';loadBlocks()">Clear</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Staff</th><th>Date</th><th>Blocked From</th><th>Blocked Until</th><th>Reason</th><th>Actions</th></tr></thead>
+      <tbody id="blocks-tbody"><tr><td colspan="6" class="loading-msg">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+    <!-- PROMOTIONS -->
+<div class="page" id="page-promotions">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+
+    <!-- COUPONS -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300">Coupon Codes</div>
+        <button class="btn-primary" onclick="openCouponModal()">+ New Coupon</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Uses</th><th>Expires</th><th>Status</th><th></th></tr></thead>
+          <tbody id="coupons-tbody"><tr><td colspan="7" class="loading-msg">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- GIFT CARDS -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300">Gift Cards</div>
+        <button class="btn-primary" onclick="openGiftCardModal()">+ Issue Gift Card</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Code</th><th>Balance</th><th>Issued To</th><th>Expires</th><th>Status</th><th></th></tr></thead>
+          <tbody id="gift-cards-tbody"><tr><td colspan="6" class="loading-msg">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LOYALTY INFO CARD -->
+  <div class="card" style="margin-top:24px;max-width:600px">
+    <div class="card-title">Loyalty Reward — Auto 5% Discount</div>
+    <p style="font-size:13px;color:var(--text-2);line-height:1.8;font-weight:300">
+      Customers who have <strong style="color:var(--gold)">5+ completed bookings</strong> with the same email automatically receive a 5% loyalty discount during online booking. The discount is detected, shown to the client, and stored on the booking record. No coupon code required.
+    </p>
+  </div>
+</div>
+    <!-- NOTIFICATIONS -->
+    <div class="page" id="page-notifications">
+      <div class="card"><div class="card-title">Recent Notifications</div><div id="notif-list"><div class="loading-msg">Loading…</div></div></div>
+    </div>
+
+    <!-- AUDIT LOG -->
+    <div class="page" id="page-audit">
+      <div class="filter-bar" style="margin-bottom:14px">
+        <select class="filter-select" id="audit-table-filter" onchange="loadAuditLog()">
+          <option value="">All Tables</option>
+          <option value="bookings">Bookings</option>
+          <option value="staff">Staff</option>
+          <option value="services">Services</option>
+          <option value="salon_settings">Settings</option>
+        </select>
+        <select class="filter-select" id="audit-action-filter" onchange="loadAuditLog()">
+          <option value="">All Actions</option>
+          <option value="INSERT">Created</option>
+          <option value="UPDATE">Updated</option>
+          <option value="DELETE">Deleted</option>
+        </select>
+        <input class="filter-input" id="audit-actor-filter" placeholder="Filter by actor email…" oninput="loadAuditLog()" style="max-width:240px">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Table</th><th>Record</th><th>Detail</th></tr></thead>
+          <tbody id="audit-tbody"><tr><td colspan="6" class="loading-msg">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div style="max-width:700px">
+        <div class="settings-grid">
+          <div>
+            <div class="card" style="margin-bottom:16px">
+  <div class="card-title">Salon Information</div>
+  <div class="modal-field"><label class="modal-label">Salon Name</label><input class="modal-input" id="cfg-name" type="text" placeholder="Luxe Nails"></div>
+  <div class="modal-field"><label class="modal-label">Address</label><input class="modal-input" id="cfg-address" type="text" placeholder="123 Beauty Lane"></div>
+  <div class="modal-field"><label class="modal-label">Phone</label><input class="modal-input" id="cfg-phone" type="tel" placeholder="+1 555 000 000"></div>
+  <div class="modal-field"><label class="modal-label">Email</label><input class="modal-input" id="cfg-email" type="email" placeholder="hello@salon.com"></div>
+  <div class="modal-field" style="margin-top:6px">
+    <label class="modal-label">Favicon</label>
+    <div style="display:flex;align-items:center;gap:14px;margin-top:4px">
+      <div id="favicon-preview" style="width:40px;height:40px;border:1px solid var(--border-2);border-radius:6px;background:var(--noir-3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden;">🌸</div>
+      <div style="flex:1">
+        <label style="display:inline-block;padding:8px 16px;background:var(--gold-dim);border:1px solid var(--gold-border);color:var(--gold);font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-radius:4px;transition:all 0.2s" onmouseover="this.style.background='rgba(196,150,58,0.22)'" onmouseout="this.style.background='var(--gold-dim)'">
+          Upload Icon
+          <input type="file" id="favicon-file" accept="image/png,image/x-icon,image/svg+xml,image/jpeg,image/webp" style="display:none" onchange="handleFaviconUpload(event)">
+        </label>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:6px;line-height:1.5">PNG, ICO, SVG · recommended 32×32 or 64×64<br>Stored in Supabase and applied live to this tab</div>
+      </div>
+      <button id="favicon-remove-btn" onclick="removeFavicon()" style="display:none;padding:6px 12px;background:transparent;border:1px solid rgba(194,88,112,0.3);color:var(--c-cancelled);font-family:'Jost',sans-serif;font-size:10px;letter-spacing:1px;cursor:pointer;border-radius:4px;white-space:nowrap">Remove</button>
+    </div>
+  </div>
+</div>
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-title">Business Hours</div>
+              <div class="modal-row">
+                <div class="modal-field"><label class="modal-label">Opens</label><input class="modal-input" id="cfg-open" type="time" value="09:00"></div>
+                <div class="modal-field"><label class="modal-label">Closes</label><input class="modal-input" id="cfg-close" type="time" value="19:00"></div>
+              </div>
+              <div class="modal-field"><label class="modal-label">Slot Gap (minutes)</label><input class="modal-input" id="cfg-gap" type="number" value="15" min="5" max="60" step="5"></div>
+            </div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-title">Location &amp; Timezone</div>
+              <div class="modal-field"><label class="modal-label">Country</label><select class="modal-input" id="cfg-country" onchange="onCountryChange()"><option value="">— Select —</option></select></div>
+              <div class="modal-field"><label class="modal-label">City</label><select class="modal-input" id="cfg-city" onchange="onCityChange()"><option value="">— Select country first —</option></select></div>
+              <div class="modal-field"><label class="modal-label">Timezone</label><input class="modal-input" id="cfg-tz-display" type="text" readonly><input type="hidden" id="cfg-timezone"></div>
+            </div>
+            <div class="card" style="margin-bottom:16px">
+  <div class="card-title">Two-Factor Authentication</div>
+  <div id="twofa-status-area"><div class="loading-msg">Loading…</div></div>
+</div>
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-title">Booking Behaviour</div>
+              <div class="settings-toggle">
+  <div>
+    <div class="st-label">Require OTP Verification</div>
+    <div class="st-desc">Customers must verify email before booking is confirmed</div>
+  </div>
+  <label class="toggle-switch">
+    <input type="checkbox" id="cfg-require-otp" onchange="saveRequireOTP()">
+    <span class="toggle-slider"></span>
+  </label>
+</div>
+              <div class="settings-toggle">
+                <div><div class="st-label">Auto-Approve Bookings</div><div class="st-desc">New bookings are instantly confirmed without staff action</div></div>
+                <label class="toggle-switch"><input type="checkbox" id="cfg-auto-approve" onchange="saveAutoApprove()"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="settings-toggle">
+                <div><div class="st-label">Block Past Booking</div><div class="st-desc">When OFF, admins can still create past appointments</div></div>
+                <label class="toggle-switch"><input type="checkbox" id="cfg-block-past" checked onchange="saveBlockPast()"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:16px">
+          <div class="card-title">Weekly Schedule</div>
+          <div id="weekly-schedule-ui"><div class="loading-msg">Loading…</div></div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title">Holidays &amp; Closures <a onclick="addHolidayRow()" style="cursor:pointer">+ Add</a></div>
+          <div id="holidays-ui"><div class="loading-msg">Loading…</div></div>
+        </div>
+          </div>
+        </div>
+        <div id="cfg-err" style="font-size:12px;color:#C06070;margin-bottom:10px;display:none"></div>
+        <button class="add-btn" style="width:100%;padding:13px" id="save-settings-btn" onclick="saveSettingsBtn()">Save All Settings</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DAY SIDEBAR -->
+<div class="day-sidebar-overlay" id="day-sidebar-overlay" onclick="closeDaySidebar()"></div>
+<div class="day-sidebar" id="day-sidebar">
+  <div class="dsh-header">
+    <div><div class="dsh-date" id="dsh-date"></div><div class="dsh-sub" id="dsh-sub"></div></div>
+    <button class="close-btn" onclick="closeDaySidebar()">✕</button>
+  </div>
+  <div class="dsh-body" id="dsh-body"></div>
+  <div class="dsh-footer"><button class="dsh-add-btn" id="dsh-add-btn">+ Add Appointment for This Day</button></div>
+</div>
+
+<!-- SERVICE MODAL -->
+<div class="modal-overlay" id="service-modal">
+  <div class="modal">
+    <div class="modal-title" id="svc-modal-title">Add Service</div>
+    <div class="modal-field"><label class="modal-label">Name</label><input class="modal-input" id="svc-name" type="text" placeholder="Gel Manicure"></div>
+    <div class="modal-row">
+      <div class="modal-field"><label class="modal-label">Duration (min)</label><input class="modal-input" id="svc-duration" type="number" value="60"></div>
+      <div class="modal-field"><label class="modal-label">Price ($)</label><input class="modal-input" id="svc-price" type="number" step="0.01" value="0"></div>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Category</label>
+      <select class="modal-input" id="svc-category">
+        <option value="manicure">Manicure</option><option value="pedicure">Pedicure</option>
+        <option value="acrylic">Acrylic</option><option value="gel">Gel</option>
+        <option value="dip">Dip Powder</option><option value="art">Nail Art</option>
+        <option value="general">General</option>
+      </select>
+    </div>
+    <div class="modal-field"><label class="modal-label">Description (optional)</label><input class="modal-input" id="svc-desc" type="text" placeholder="Brief description…"></div>
+    <div class="modal-err" id="svc-err"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal('service');resetServiceModal()">Cancel</button>
+      <button class="modal-btn modal-btn-primary" id="svc-save-btn" onclick="saveService()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="modal-overlay" id="booking-modal">
+  <div class="modal">
+    <div class="modal-title" id="bk-modal-title">Add Appointment</div>
+    <div class="modal-row">
+      <div class="modal-field"><label class="modal-label">Client Name</label><input class="modal-input" id="bk-name" type="text" placeholder="Jane Smith" autocomplete="off"></div>
+      <div class="modal-field"><label class="modal-label">Phone</label><input class="modal-input" id="bk-phone" type="tel" placeholder="+1 555 000 000"></div>
+    </div>
+    <div class="modal-field"><label class="modal-label">Email</label><input class="modal-input" id="bk-email" type="email" placeholder="jane@email.com" autocomplete="off"></div>
+    <div class="modal-field"><label class="modal-label">Service</label><select class="modal-input" id="bk-service"></select></div>
+    <div class="modal-field"><label class="modal-label">Staff Member</label><select class="modal-input" id="bk-staff"><option value="">Any Available</option></select></div>
+    <div class="modal-field">
+      <label class="modal-label">Date &amp; Time</label>
+      <div class="bk-dt-layout">
+        <div class="bk-cal-wrap">
+          <div class="bk-cal-nav">
+            <button class="bk-cal-nav-btn" onclick="bkCalNav(-1)">‹</button>
+            <span class="bk-cal-month" id="bk-cal-month-label"></span>
+            <button class="bk-cal-nav-btn" onclick="bkCalNav(1)">›</button>
+          </div>
+          <div class="bk-cal-days-head">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+          </div>
+          <div class="bk-cal-grid" id="bk-cal-grid"></div>
+          <input type="hidden" id="bk-date">
+        </div>
+        <div class="bk-time-wrap">
+          <div class="bk-time-label" id="bk-time-label">← Pick a date</div>
+          <div class="bk-time-grid" id="bk-time-grid"></div>
+          <input type="hidden" id="bk-time">
+        </div>
+      </div>
+    </div>
+    <div class="modal-field"><label class="modal-label">Notes (optional)</label><textarea class="modal-input" id="bk-notes" placeholder="Any special requests…"></textarea></div>
+    <div id="bk-past-warn" style="font-size:12px;color:var(--c-completed);display:none;margin-top:6px">⚠ This date is in the past — adding as admin override</div>
+    <div class="modal-err" id="bk-err"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal('booking')">Cancel</button>
+      <button class="modal-btn modal-btn-primary" onclick="saveBooking()">Save Appointment</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAFF MODAL -->
+<div class="modal-overlay" id="staff-modal">
+  <div class="modal">
+    <div class="modal-title" id="staff-modal-title">Add Staff Member</div>
+    <div class="avatar-upload-area">
+      <div class="avatar-upload-circle" id="st-avatar-preview" onclick="document.getElementById('st-avatar-file').click()">
+        <span id="st-avatar-initial">+</span>
+        <span class="upload-icon-overlay">📷</span>
+      </div>
+      <input type="file" id="st-avatar-file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="previewAvatar(event)">
+      <span class="avatar-upload-label">Click to upload photo (JPG, PNG, WebP · max 2MB)</span>
+    </div>
+    <div class="modal-divider"></div>
+    <div class="modal-row">
+      <div class="modal-field"><label class="modal-label">Full Name</label><input class="modal-input" id="st-name" type="text" placeholder="Jane Smith" oninput="updateAvatarInitial()"></div>
+      <div class="modal-field"><label class="modal-label">Role</label><select class="modal-input" id="st-role"><option value="staff">Staff</option><option value="admin">Admin</option><option value="owner">Owner</option></select></div>
+    </div>
+    <div class="modal-field"><label class="modal-label">Email</label><input class="modal-input" id="st-email" type="email" placeholder="jane@salon.com"></div>
+    <div class="modal-field"><label class="modal-label">Phone (optional)</label><input class="modal-input" id="st-phone" type="tel"></div>
+    <div class="modal-field"><label class="modal-label">Bio (optional)</label><input class="modal-input" id="st-bio" type="text" placeholder="Specializes in gel and nail art…"></div>
+    <p class="modal-hint">After saving, invite this email in Supabase Auth → Users → Invite User.</p>
+    <div class="modal-err" id="st-err"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal('staff');resetStaffModal()">Cancel</button>
+      <button class="modal-btn modal-btn-primary" onclick="saveStaff()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOTP MODAL -->
+<div class="modal-overlay" id="totp-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title">Set Up Authenticator</div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">Scan this QR code with Google Authenticator, Authy, or any TOTP app. Then enter the 6-digit code to confirm.</p>
+    <div style="text-align:center;margin-bottom:16px">
+      <img id="totp-qr" src="" alt="QR Code" style="width:180px;height:180px;border:4px solid var(--gold-border);border-radius:4px">
+    </div>
+    <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-bottom:16px;letter-spacing:1px">
+      Manual key: <span id="totp-secret" style="color:var(--gold);font-family:monospace;user-select:all"></span>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Verification Code</label>
+      <input class="modal-input" id="totp-verify-code" type="text" inputmode="numeric" maxlength="6" placeholder="000000" style="letter-spacing:6px;font-size:20px;text-align:center">
+    </div>
+    <div class="modal-err" id="totp-err"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal('totp')">Cancel</button>
+      <button class="modal-btn modal-btn-primary" onclick="verifyTOTP()">Verify &amp; Enable</button>
+    </div>
+  </div>
+</div>
+<!-- COUPON MODAL -->
+<div class="modal-overlay" id="coupon-modal">
+  <div class="modal">
+    <div class="modal-title" id="coupon-modal-title">New Coupon Code</div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label class="modal-label">Code</label>
+        <input class="modal-input" id="cp-code" type="text" placeholder="SUMMER10" style="text-transform:uppercase">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Description</label>
+        <input class="modal-input" id="cp-desc" type="text" placeholder="Summer promo">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label class="modal-label">Type</label>
+        <select class="modal-input" id="cp-type">
+          <option value="percent">Percent off (%)</option>
+          <option value="fixed">Fixed amount ($)</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Value</label>
+        <input class="modal-input" id="cp-value" type="number" min="1" placeholder="10">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label class="modal-label">Max Uses (blank = unlimited)</label>
+        <input class="modal-input" id="cp-max-uses" type="number" min="1" placeholder="100">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Min Past Bookings Required</label>
+        <input class="modal-input" id="cp-min-bookings" type="number" min="0" value="0">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label class="modal-label">Valid From</label>
+        <input class="modal-input" id="cp-from" type="date">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Valid Until (blank = no expiry)</label>
+        <input class="modal-input" id="cp-until" type="date">
+      </div>
+    </div>
+    <div class="modal-err" id="cp-err"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal('coupon')">Cancel</button>
+      <button class="modal-btn modal-btn-primary" onclick="saveCoupon()">Save Coupon</button>
+    </div>
+  </div>
+</div>
+
+<!-- GIFT CARD MODAL -->
+<div class="modal-overlay" id="gift-card-modal">
+  <div class="modal">
+    <div class="modal-title">Issue Gift Card</div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label class="modal-label">Recipient Name</label>
+        <input class="modal-input" id="gc-name" type="text" placeholder="Jane Smith">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Recipient Email</label>
+        <input class="modal-input" id="gc-email" type="email" placeholder="jane@email.com">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label class="modal-label">Balance ($)</label>
+        <input class="modal-input" id="gc-balance" type="number" min="1" placeholder="50">
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">Expires (blank = no expiry)</label>
+        <input class="modal-input" id="gc-expires" type="date">
+      </div>
+    </div>
+    <p class="modal-hint">A unique code will be auto-generated and shown after saving. You can send it to the client manually.</p>
+    <div class="modal-err" id="gc-err"></div>
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" onclick="closeModal('gift-card')">Cancel</button>
+      <button class="modal-btn modal-btn-primary" onclick="saveGiftCard()">Issue Card</button>
+    </div>
+  </div>
+</div>
+<nav class="bottom-nav" id="bottom-nav" style="display:none">
+  <div class="bn-item active" onclick="showPage('dashboard')" id="bn-dashboard">
+    <div class="bn-icon">◈</div>
+    <div class="bn-label">Home</div>
+  </div>
+  <div class="bn-item" onclick="showPage('bookings')" id="bn-bookings">
+    <div class="bn-icon">📋</div>
+    <div class="bn-dot" id="bn-pending-dot"></div>
+    <div class="bn-label">Bookings</div>
+  </div>
+  <div class="bn-item" onclick="showPage('calendar')" id="bn-calendar">
+    <div class="bn-icon">📅</div>
+    <div class="bn-label">Calendar</div>
+  </div>
+  <div class="bn-item" onclick="showPage('settings')" id="bn-settings">
+    <div class="bn-icon">⚙️</div>
+    <div class="bn-label">Settings</div>
+  </div>
+  <div class="bn-item" onclick="doLogout()" id="bn-logout">
+    <div class="bn-icon">→</div>
+    <div class="bn-label">Sign Out</div>
+  </div>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════════════ */
+const SUPABASE_URL = 'https://sccapnlbfxjidmwqaeqs.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjY2FwbmxiZnhqaWRtd3FhZXFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NzA3MzQsImV4cCI6MjA5MzE0NjczNH0.Fj7uQ9GBlknLH9vCYYIelkuWQC2d3Gl5K0A-furZfHI'
+
+const { createClient } = supabase
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+/* ══════════════════════════════════════════════════════
+   XSS ESCAPE
+══════════════════════════════════════════════════════ */
+function esc(str) {
+  if (str == null) return ''
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#039;')
+}
+
+/* ══════════════════════════════════════════════════════
+   VALIDATION
+══════════════════════════════════════════════════════ */
+const Validate = {
+  sanitizeText(val, maxLen = 200) {
+    if (val == null) return ''
+    return String(val).replace(/[\x00-\x1F\x7F]/g,'').trim().slice(0, maxLen)
+  },
+  name(val) {
+    const v = this.sanitizeText(val, 100)
+    if (!v) return { error: 'Name is required.' }
+    if (v.length < 2) return { error: 'Name must be at least 2 characters.' }
+    if (!/^[\p{L}\p{M}'\-\s.]+$/u.test(v)) return { error: 'Name contains invalid characters.' }
+    return { value: v }
+  },
+  email(val) {
+    const v = this.sanitizeText(val, 254)
+    if (!v) return { error: 'Email is required.' }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) return { error: 'Invalid email address.' }
+    return { value: v.toLowerCase() }
+  },
+  phone(val, required = true) {
+    const v = this.sanitizeText(val, 30)
+    if (!v && required) return { error: 'Phone number is required.' }
+    if (!v) return { value: null }
+    if (!/^\+?[\d\s\-().]{6,25}$/.test(v)) return { error: 'Invalid phone number format.' }
+    return { value: v }
+  },
+  price(val) {
+    const n = parseFloat(val)
+    if (isNaN(n) || n < 0) return { error: 'Price must be a positive number.' }
+    if (n > 99999) return { error: 'Price seems too high — please check.' }
+    return { value: Math.round(n * 100) / 100 }
+  },
+  duration(val) {
+    const n = parseInt(val)
+    if (isNaN(n) || n < 5) return { error: 'Duration must be at least 5 minutes.' }
+    if (n > 480) return { error: 'Duration cannot exceed 8 hours.' }
+    return { value: n }
+  },
+  date(val) {
+    if (!val || !/^\d{4}-\d{2}-\d{2}$/.test(val)) return { error: 'Please select a date.' }
+    const d = new Date(val + 'T00:00:00')
+    if (isNaN(d.getTime())) return { error: 'Invalid date.' }
+    return { value: val }
+  },
+  time(val) {
+    if (!val || !/^\d{2}:\d{2}(:\d{2})?$/.test(val)) return { error: 'Please select a time slot.' }
+    return { value: val }
+  },
+  notes(val) {
+    return { value: this.sanitizeText(val, 1000) || null }
+  },
+  collect(fields) {
+    const values = {}
+    for (const [key, result] of Object.entries(fields)) {
+      if (result.error) return { error: result.error }
+      values[key] = result.value
+    }
+    return { values }
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   RATE LIMITERS
+══════════════════════════════════════════════════════ */
+function createRateLimiter(maxAttempts, windowMs, lockoutMs) {
+  let attempts = [], lockedUntil = null
+  return {
+    try() {
+      const now = Date.now()
+      if (lockedUntil && now < lockedUntil) {
+        const s = Math.ceil((lockedUntil - now) / 1000)
+        return { allowed: false, message: `Too many attempts. Try again in ${s}s.` }
+      }
+      attempts = attempts.filter(t => now - t < windowMs)
+      attempts.push(now)
+      if (attempts.length > maxAttempts) {
+        lockedUntil = now + lockoutMs; attempts = []
+        return { allowed: false, message: `Too many attempts. Locked for ${lockoutMs/1000}s.` }
+      }
+      return { allowed: true }
+    },
+    reset() { attempts = []; lockedUntil = null }
+  }
+}
+
+const loginLimiter   = createRateLimiter(5,  2 * 60 * 1000, 5 * 60 * 1000)
+const statusLimiter  = createRateLimiter(30, 60 * 1000,     30 * 1000)
+const bookingLimiter = createRateLimiter(10, 60 * 1000,     60 * 1000)
+const writeLimiter   = createRateLimiter(20, 60 * 1000,     30 * 1000)
+const totpLimiter    = createRateLimiter(5,  5 * 60 * 1000, 15 * 60 * 1000)
+const forgotLimiter  = createRateLimiter(6,  10 * 60 * 1000, 2 * 60 * 1000)
+
+/* ══════════════════════════════════════════════════════
+   SESSION MANAGEMENT
+══════════════════════════════════════════════════════ */
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000
+const SESSION_WARN_MS    = 25 * 60 * 1000
+let sessionTimer = null, sessionWarnTimer = null
+
+function resetSessionTimer() {
+  clearTimeout(sessionTimer); clearTimeout(sessionWarnTimer)
+  document.getElementById('session-warning').classList.remove('show')
+  sessionWarnTimer = setTimeout(() => {
+    document.getElementById('session-warning').classList.add('show')
+  }, SESSION_WARN_MS)
+  sessionTimer = setTimeout(async () => {
+    showToast('Session expired — please sign in again', 'info')
+    await doLogout()
+  }, SESSION_TIMEOUT_MS)
+}
+;['click','keydown','mousemove','touchstart'].forEach(evt =>
+  document.addEventListener(evt, resetSessionTimer, { passive: true })
+)
+
+/* ══════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════ */
+let currentUser = null, currentStaff = null
+let allBookings = [], allBookingsForCalendar = [], allStaffList = []
+let calDate = new Date(), calView = 'month', calDayDate = new Date()
+let calStaffFilter = 'all', activeStatusFilter = ''
+let autoApprove = false, blockPast = true
+let realtimeChannel = null
+let totpFactorId = null
+let editingStaffId = null, stAvatarDataUrl = null, stAvatarFile = null
+let editingServiceId = null
+
+async function saveRequireOTP() {
+  const ro = document.getElementById('cfg-require-otp').checked
+  const { error } = await sb.from('salon_settings')
+    .upsert({ id: 1, require_otp: ro }, { onConflict: 'id' })
+
+  if (error) {
+    console.error('saveRequireOTP error:', error)
+    showToast('Failed to save: ' + error.message, 'error')
+    document.getElementById('cfg-require-otp').checked = !ro
+    return
+  }
+  showToast(`OTP verification ${ro ? 'enabled' : 'disabled'} ✓`, 'success')
+}
+/* ══════════════════════════════════════════════════════
+   SETTINGS / TZ
+══════════════════════════════════════════════════════ */
+let SALON_TZ = 'Europe/Skopje', SALON_OPEN = 9, SALON_CLOSE = 19, SALON_MIN_GAP = 15
+
+function salonNow() { return new Date(new Date().toLocaleString('en-US',{timeZone:SALON_TZ})) }
+function salonDateStr(d) {
+  const dd = d || salonNow()
+  return `${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,'0')}-${String(dd.getDate()).padStart(2,'0')}`
+}
+
+const TZ_DATA = {
+  "United States":[{city:"New York",tz:"America/New_York"},{city:"Chicago",tz:"America/Chicago"},{city:"Los Angeles",tz:"America/Los_Angeles"},{city:"Houston",tz:"America/Chicago"},{city:"Phoenix",tz:"America/Phoenix"},{city:"Miami",tz:"America/New_York"},{city:"Seattle",tz:"America/Los_Angeles"},{city:"Denver",tz:"America/Denver"},{city:"San Francisco",tz:"America/Los_Angeles"},{city:"Anchorage",tz:"America/Anchorage"},{city:"Honolulu",tz:"Pacific/Honolulu"}],
+  "United Kingdom":[{city:"London",tz:"Europe/London"},{city:"Manchester",tz:"Europe/London"},{city:"Birmingham",tz:"Europe/London"},{city:"Glasgow",tz:"Europe/London"}],
+  "Australia":[{city:"Sydney",tz:"Australia/Sydney"},{city:"Melbourne",tz:"Australia/Melbourne"},{city:"Brisbane",tz:"Australia/Brisbane"},{city:"Perth",tz:"Australia/Perth"},{city:"Adelaide",tz:"Australia/Adelaide"}],
+  "Canada":[{city:"Toronto",tz:"America/Toronto"},{city:"Vancouver",tz:"America/Vancouver"},{city:"Montreal",tz:"America/Toronto"},{city:"Calgary",tz:"America/Edmonton"}],
+  "North Macedonia":[{city:"Skopje",tz:"Europe/Skopje"},{city:"Bitola",tz:"Europe/Skopje"},{city:"Ohrid",tz:"Europe/Skopje"}],
+  "Germany":[{city:"Berlin",tz:"Europe/Berlin"},{city:"Munich",tz:"Europe/Berlin"},{city:"Hamburg",tz:"Europe/Berlin"},{city:"Frankfurt",tz:"Europe/Berlin"}],
+  "France":[{city:"Paris",tz:"Europe/Paris"},{city:"Lyon",tz:"Europe/Paris"},{city:"Marseille",tz:"Europe/Paris"}],
+  "Spain":[{city:"Madrid",tz:"Europe/Madrid"},{city:"Barcelona",tz:"Europe/Madrid"}],
+  "Italy":[{city:"Rome",tz:"Europe/Rome"},{city:"Milan",tz:"Europe/Rome"}],
+  "Netherlands":[{city:"Amsterdam",tz:"Europe/Amsterdam"},{city:"Rotterdam",tz:"Europe/Amsterdam"}],
+  "Portugal":[{city:"Lisbon",tz:"Europe/Lisbon"},{city:"Porto",tz:"Europe/Lisbon"}],
+  "Sweden":[{city:"Stockholm",tz:"Europe/Stockholm"}],
+  "Poland":[{city:"Warsaw",tz:"Europe/Warsaw"},{city:"Krakow",tz:"Europe/Warsaw"}],
+  "Greece":[{city:"Athens",tz:"Europe/Athens"},{city:"Thessaloniki",tz:"Europe/Athens"}],
+  "Serbia":[{city:"Belgrade",tz:"Europe/Belgrade"}],
+  "Croatia":[{city:"Zagreb",tz:"Europe/Zagreb"},{city:"Split",tz:"Europe/Zagreb"}],
+  "Bulgaria":[{city:"Sofia",tz:"Europe/Sofia"}],
+  "Romania":[{city:"Bucharest",tz:"Europe/Bucharest"}],
+  "Hungary":[{city:"Budapest",tz:"Europe/Budapest"}],
+  "Turkey":[{city:"Istanbul",tz:"Europe/Istanbul"},{city:"Ankara",tz:"Europe/Istanbul"}],
+  "UAE":[{city:"Dubai",tz:"Asia/Dubai"},{city:"Abu Dhabi",tz:"Asia/Dubai"}],
+  "India":[{city:"Mumbai",tz:"Asia/Kolkata"},{city:"Delhi",tz:"Asia/Kolkata"},{city:"Bangalore",tz:"Asia/Kolkata"}],
+  "Japan":[{city:"Tokyo",tz:"Asia/Tokyo"},{city:"Osaka",tz:"Asia/Tokyo"}],
+  "Singapore":[{city:"Singapore",tz:"Asia/Singapore"}],
+  "South Korea":[{city:"Seoul",tz:"Asia/Seoul"}],
+  "China":[{city:"Beijing",tz:"Asia/Shanghai"},{city:"Shanghai",tz:"Asia/Shanghai"}],
+  "New Zealand":[{city:"Auckland",tz:"Pacific/Auckland"}],
+  "South Africa":[{city:"Johannesburg",tz:"Africa/Johannesburg"},{city:"Cape Town",tz:"Africa/Johannesburg"}],
+  "Brazil":[{city:"São Paulo",tz:"America/Sao_Paulo"},{city:"Rio de Janeiro",tz:"America/Sao_Paulo"}],
+  "Mexico":[{city:"Mexico City",tz:"America/Mexico_City"},{city:"Cancún",tz:"America/Cancun"}],
+  "Ireland":[{city:"Dublin",tz:"Europe/Dublin"}],
+  "Russia":[{city:"Moscow",tz:"Europe/Moscow"}],
+}
+
+function populateCountries() {
+  const sel = document.getElementById('cfg-country')
+  const priority = ['United States','United Kingdom','Australia','Canada','North Macedonia']
+  const rest = Object.keys(TZ_DATA).filter(c=>!priority.includes(c)).sort()
+  sel.innerHTML = '<option value="">— Select country —</option>'
+  priority.forEach(c => { const o = document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o) })
+  const sep = document.createElement('option'); sep.disabled=true; sep.textContent='──────'; sel.appendChild(sep)
+  rest.forEach(c => { const o = document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o) })
+}
+
+function onCountryChange() {
+  const country = document.getElementById('cfg-country').value
+  const sel = document.getElementById('cfg-city')
+  sel.innerHTML = ''
+  if (!country || !TZ_DATA[country]) { sel.innerHTML='<option value="">— Select country first —</option>'; return }
+  TZ_DATA[country].forEach(({city,tz}) => {
+    const o = document.createElement('option'); o.value=tz; o.textContent=city; sel.appendChild(o)
+  })
+  onCityChange()
+}
+
+function onCityChange() {
+  const tz = document.getElementById('cfg-city').value
+  document.getElementById('cfg-timezone').value = tz
+  if (tz) {
+    try {
+      const parts = new Intl.DateTimeFormat('en-US',{timeZone:tz,timeZoneName:'short'}).formatToParts(new Date())
+      const tzName = parts.find(p=>p.type==='timeZoneName')?.value || tz
+      document.getElementById('cfg-tz-display').value = `${tz} (${tzName})`
+    } catch(e) { document.getElementById('cfg-tz-display').value = tz }
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════════════════ */
+async function doLogin() {
+  const err = document.getElementById('login-err')
+  const btn = document.getElementById('login-btn')
+
+  const limit = loginLimiter.try()
+  if (!limit.allowed) {
+    showErr(err, limit.message)
+    btn.disabled = true
+    setTimeout(() => { btn.disabled = false; err.classList.remove('show') }, 5 * 60 * 1000)
+    return
+  }
+
+  const emailCheck = Validate.email(document.getElementById('login-email').value)
+  if (emailCheck.error) { showErr(err, emailCheck.error); return }
+  const pass = document.getElementById('login-pass').value
+  if (!pass) { showErr(err, 'Please enter your password.'); return }
+
+  btn.textContent = 'Signing in…'; btn.disabled = true
+  err.classList.remove('show')
+
+  const { data, error } = await sb.auth.signInWithPassword({ email: emailCheck.value, password: pass })
+  btn.disabled = false; btn.textContent = 'Sign In'
+
+  if (error) {
+    sb.from('audit_log').insert({
+      table_name: 'auth', action: 'LOGIN_FAILED', actor_email: emailCheck.value,
+      record_id: null, new_data: { reason: 'invalid_credentials', ua: navigator.userAgent.slice(0, 200) }
+    }).then(() => {})
+    showErr(err, 'Invalid credentials. Please try again.'); return
+  }
+
+  loginLimiter.reset()
+  currentUser = data.user
+  await loadStaffRecord()
+
+  if (!currentStaff || currentStaff.is_active === false) {
+    await sb.auth.signOut()
+    showErr(err, 'Account not found or deactivated.')
+    return
+  }
+
+  showApp()
+  setupRealtime()
+  resetSessionTimer()
+}
+
+async function loadStaffRecord() {
+  const { data } = await sb.from('staff').select('*').eq('auth_user_id', currentUser.id).single()
+  currentStaff = data
+}
+
+async function doLogout() {
+  clearTimeout(sessionTimer); clearTimeout(sessionWarnTimer)
+  document.getElementById('session-warning').classList.remove('show')
+  if (realtimeChannel) { await sb.removeChannel(realtimeChannel); realtimeChannel = null }
+  await sb.auth.signOut()
+  currentUser = null; currentStaff = null; allBookings = []; allBookingsForCalendar = []
+  // Reset ALL role-gated UI to hidden defaults so the next login re-evaluates from scratch
+  document.getElementById('nav-management').style.display = 'none'
+  document.getElementById('header-add-btn').style.display = 'none'
+  const bkBtn = document.getElementById('bk-add-btn')
+  if (bkBtn) bkBtn.style.display = 'none'
+  document.getElementById('auto-approve-pill').style.display = 'none'
+  document.getElementById('login-screen').style.display = 'flex'
+  document.getElementById('app').classList.remove('show')
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none'
+  document.getElementById('forgot-screen').classList.remove('show')
+  document.getElementById('reset-screen').classList.remove('show')
+  document.getElementById('app').classList.add('show')
+  if (window.innerWidth <= 768) document.getElementById('bottom-nav').style.display = 'flex';
+  renderSidebarUser()
+  document.getElementById('header-date').textContent =
+    salonNow().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})
+  if (['admin','owner'].includes(currentStaff?.role)) {
+    document.getElementById('nav-management').style.display = 'block'
+    document.getElementById('header-add-btn').style.display = 'block'
+    document.getElementById('bk-add-btn').style.display = 'block'
+  }
+  loadSettings().then(() => { loadDashboard(); loadBookings() })
+  resetSessionTimer()
+}
+
+function renderSidebarUser() {
+  const el = document.getElementById('user-avatar')
+  const overlay = el.querySelector('.user-avatar-overlay')
+  el.innerHTML = ''
+  if (overlay) el.appendChild(overlay)
+  if (currentStaff?.avatar_url) {
+    const img = document.createElement('img')
+    img.src = currentStaff.avatar_url; img.alt = 'Avatar'
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;inset:0;'
+    el.insertBefore(img, overlay)
+  } else {
+    const span = document.createElement('span')
+    span.textContent = (currentStaff?.name || currentUser?.email || '?').charAt(0).toUpperCase()
+    el.insertBefore(span, overlay)
+  }
+  document.getElementById('user-name').textContent = currentStaff?.name || currentUser?.email || '—'
+  document.getElementById('user-role').textContent = currentStaff?.role || 'staff'
+  const r = currentStaff?.role || 'staff'
+  document.getElementById('user-role-label').textContent = r.charAt(0).toUpperCase() + r.slice(1) + ' Portal'
+}
+
+/* ══════════════════════════════════════════════════════
+   FORGOT / RESET PASSWORD
+══════════════════════════════════════════════════════ */
+function showLoginScreen() {
+  document.getElementById('forgot-screen').classList.remove('show')
+  document.getElementById('reset-screen').classList.remove('show')
+  document.getElementById('login-screen').style.display = 'flex'
+}
+
+function showForgotScreen() {
+  document.getElementById('login-screen').style.display = 'none'
+  document.getElementById('forgot-success').classList.remove('show')
+  document.getElementById('forgot-err').classList.remove('show')
+  document.getElementById('forgot-email').value = ''
+  document.getElementById('forgot-screen').classList.add('show')
+  setTimeout(() => document.getElementById('forgot-email').focus(), 100)
+}
+
+async function doForgotPassword() {
+  const err = document.getElementById('forgot-err')
+  const btn = document.getElementById('forgot-btn')
+  const succ = document.getElementById('forgot-success')
+  err.classList.remove('show'); succ.classList.remove('show')
+
+  const fl = forgotLimiter.try()
+  if (!fl.allowed) {
+    // Extract seconds remaining and show a live countdown on the button
+    const match = fl.message.match(/\d+/)
+    let secs = match ? parseInt(match[0]) : 60
+    btn.disabled = true
+    const tick = () => {
+      btn.textContent = `Wait ${secs}s…`
+      if (secs <= 0) { btn.disabled = false; btn.textContent = 'Send Reset Link'; return }
+      secs--; setTimeout(tick, 1000)
+    }
+    tick()
+    showErr(err, 'Too many requests — please wait before trying again.')
+    return
+  }
+
+  const emailCheck = Validate.email(document.getElementById('forgot-email').value)
+  if (emailCheck.error) { showErr(err, emailCheck.error); return }
+
+  btn.textContent = 'Sending…'; btn.disabled = true
+  const redirectTo = window.location.origin + window.location.pathname
+  await sb.auth.resetPasswordForEmail(emailCheck.value, { redirectTo })
+  // Always show success to prevent email enumeration
+  btn.disabled = false; btn.textContent = 'Send Reset Link'
+  succ.classList.add('show')
+  document.getElementById('forgot-email').value = ''
+}
+
+function checkPwStrength(pw) {
+  const bar = document.getElementById('pw-strength-bar')
+  const label = document.getElementById('pw-strength-label')
+  if (!pw) { bar.style.width = '0%'; label.textContent = ''; return }
+  let score = 0
+  if (pw.length >= 8)  score++
+  if (pw.length >= 12) score++
+  if (/[A-Z]/.test(pw)) score++
+  if (/[0-9]/.test(pw)) score++
+  if (/[^A-Za-z0-9]/.test(pw)) score++
+  const levels = [
+    { pct: '20%', color: 'var(--c-cancelled)', text: 'Very weak' },
+    { pct: '40%', color: 'var(--rose)',        text: 'Weak' },
+    { pct: '60%', color: 'var(--c-completed)', text: 'Fair' },
+    { pct: '80%', color: 'var(--c-confirmed)', text: 'Strong' },
+    { pct: '100%',color: 'var(--c-confirmed)', text: 'Very strong' },
+  ]
+  const lvl = levels[Math.min(score - 1, 4)] || levels[0]
+  bar.style.width = lvl.pct
+  bar.style.background = lvl.color
+  label.textContent = lvl.text
+  label.style.color = lvl.color
+}
+
+async function doResetPassword() {
+  const err = document.getElementById('reset-err')
+  const btn = document.getElementById('reset-btn')
+  const succ = document.getElementById('reset-success')
+  err.classList.remove('show'); succ.classList.remove('show')
+
+  const pass    = document.getElementById('reset-pass').value
+  const confirm = document.getElementById('reset-confirm').value
+
+  if (!pass || pass.length < 8) { showErr(err, 'Password must be at least 8 characters.'); return }
+  if (pass !== confirm) { showErr(err, 'Passwords do not match.'); return }
+  if (!/[A-Z]/.test(pass)) { showErr(err, 'Password must contain at least one uppercase letter.'); return }
+  if (!/[0-9]/.test(pass)) { showErr(err, 'Password must contain at least one number.'); return }
+
+  btn.textContent = 'Updating…'; btn.disabled = true
+  const { error } = await sb.auth.updateUser({ password: pass })
+  btn.disabled = false; btn.textContent = 'Update Password'
+
+  if (error) {
+    // Supabase returns 'invalid_grant' or similar when the link is expired or already used
+    const msg = error.message || ''
+    if (/expired|invalid|not found|already used/i.test(msg)) {
+      showErr(err, 'This reset link has expired or already been used. Please request a new one.')
+      setTimeout(() => {
+        document.getElementById('reset-screen').classList.remove('show')
+        showForgotScreen()
+      }, 3000)
+    } else {
+      showErr(err, safeDbError(error))
+    }
+    return
+  }
+
+  succ.classList.add('show')
+  document.getElementById('reset-pass').value = ''
+  document.getElementById('reset-confirm').value = ''
+  // Sign out and redirect to login after a short pause
+  setTimeout(async () => {
+    await sb.auth.signOut()
+    document.getElementById('reset-screen').classList.remove('show')
+    document.getElementById('login-screen').style.display = 'flex'
+    showToast('Password updated — please sign in ✓', 'success')
+  }, 2200)
+}
+
+/* ── RECOVERY TOKEN DETECTION ──────────────────────────────
+   Supabase appends #access_token=...&type=recovery to the URL
+   when the user clicks a password-reset email link.
+   We parse this synchronously so the boot logic knows to show
+   the reset screen instead of the normal dashboard.
+─────────────────────────────────────────────────────────── */
+const _hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+const IS_RECOVERY = _hashParams.get('type') === 'recovery'
+
+// If this is a recovery link, immediately hide login and show reset screen
+// before any async code runs — prevents a flash of the login screen.
+if (IS_RECOVERY) {
+  document.getElementById('login-screen').style.display = 'none'
+  document.getElementById('reset-screen').classList.add('show')
+  // Clean the token out of the URL bar so it can't be copy-pasted or reused
+  history.replaceState(null, '', window.location.pathname)
+}
+
+// Also handle via onAuthStateChange as a belt-and-suspenders fallback
+// (catches cases where Supabase exchanges the token before our hash check)
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    document.getElementById('login-screen').style.display = 'none'
+    document.getElementById('forgot-screen').classList.remove('show')
+    document.getElementById('app').classList.remove('show')
+    document.getElementById('reset-screen').classList.add('show')
+    setTimeout(() => document.getElementById('reset-pass')?.focus(), 150)
+  }
+})
+
+/* ══════════════════════════════════════════════════════
+   AVATAR
+══════════════════════════════════════════════════════ */
+const ALLOWED_IMG_TYPES = ['image/jpeg','image/png','image/webp']
+const MAX_IMG_BYTES = 2 * 1024 * 1024
+
+function validateImageFile(file) {
+  if (!ALLOWED_IMG_TYPES.includes(file.type)) return 'Only JPG, PNG, and WebP images are allowed.'
+  if (file.size > MAX_IMG_BYTES) return 'Image must be under 2 MB.'
+  return null
+}
+
+async function uploadAvatarToStorage(file, staffId) {
+  const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg'
+  const path = `${staffId}-${crypto.randomUUID()}.${ext}`
+  const { error } = await sb.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
+  if (error) throw error
+  const { data } = sb.storage.from('avatars').getPublicUrl(path)
+  return data.publicUrl
+}
+
+async function uploadSidebarAvatar(event) {
+  const file = event.target.files[0]
+  if (!file || !currentStaff) return
+  const ve = validateImageFile(file)
+  if (ve) { showToast(ve, 'error'); return }
+  showToast('Uploading…', 'info')
+  try {
+    const url = await uploadAvatarToStorage(file, currentStaff.id)
+    await sb.from('staff').update({ avatar_url: url }).eq('id', currentStaff.id)
+    currentStaff.avatar_url = url; renderSidebarUser(); showToast('Photo updated ✓', 'success')
+  } catch(e) { showToast('Upload failed: ' + e.message, 'error') }
+}
+
+function previewAvatar(event) {
+  const file = event.target.files[0]; if (!file) return
+  const ve = validateImageFile(file)
+  if (ve) { showToast(ve, 'error'); event.target.value = ''; return }
+  const reader = new FileReader()
+  reader.onload = e => {
+    const circle = document.getElementById('st-avatar-preview')
+    const overlay = circle.querySelector('.upload-icon-overlay')
+    circle.innerHTML = ''
+    const img = document.createElement('img'); img.src = e.target.result; img.alt = 'Preview'
+    circle.appendChild(img)
+    if (overlay) circle.appendChild(overlay)
+  }
+  reader.readAsDataURL(file)
+  stAvatarFile = file; stAvatarDataUrl = null
+}
+
+function updateAvatarInitial() {
+  if (stAvatarFile || stAvatarDataUrl) return
+  const name = document.getElementById('st-name').value.trim()
+  const el = document.getElementById('st-avatar-initial')
+  if (el) el.textContent = name ? name.charAt(0).toUpperCase() : '+'
+}
+
+/* ══════════════════════════════════════════════════════
+   REALTIME
+══════════════════════════════════════════════════════ */
+function setupRealtime() {
+  realtimeChannel = sb.channel('admin-bookings')
+    .on('postgres_changes', { event:'*', schema:'public', table:'bookings' }, async payload => {
+      await loadBookings(); await loadDashboard()
+      if (calView === 'day') renderDayView(); else renderMonthView()
+      if (payload.eventType === 'INSERT') showToast('New booking received!', 'info')
+      else if (payload.eventType === 'UPDATE') showToast('Booking updated', 'success')
+    }).subscribe()
+}
+
+/* ══════════════════════════════════════════════════════
+   NAV
+══════════════════════════════════════════════════════ */
+function showPage(id) {
+const mgmt = ['services','staff','notifications','audit','settings','blocks']
+if (mgmt.includes(id) && currentStaff?.role === 'staff') { showToast('Access restricted', 'error'); return }
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  document.getElementById(`page-${id}`).classList.add('active')
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.trim().toLowerCase().startsWith(id.toLowerCase())) n.classList.add('active')
+  })
+  const titles = { dashboard:'Dashboard', bookings:'All Bookings', calendar:'Calendar', services:'Services', staff:'Team', blocks:'Time Blocks', notifications:'Notifications', audit:'Audit Log', settings:'Settings' }
+  document.getElementById('page-title').textContent = titles[id] || id
+  if (id === 'bookings')      { loadBookings(); updateAutoApproveBanner() }
+  if (id === 'calendar')      renderCalendarPage()
+  if (id === 'services')      loadServices()
+  if (id === 'staff')         loadStaff()
+if (id === 'blocks')        loadBlocks()
+if (id === 'promotions')    { loadCoupons(); loadGiftCards() }
+
+if (id === 'settings')      { loadSettings(); load2FAStatus(); loadWeeklySchedule(); loadHolidays() }
+if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open')
+document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+const bnMap = { dashboard:'bn-dashboard', bookings:'bn-bookings', calendar:'bn-calendar', settings:'bn-settings' };
+if (bnMap[id]) document.getElementById(bnMap[id])?.classList.add('active');
+}
+
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open') }
+function refreshPage() { loadDashboard(); loadBookings(); showToast('Refreshed ✓', 'success') }
+
+/* ══════════════════════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════════════════════ */
+async function loadSettings() {
+  populateCountries()
+  try {
+    const { data, error } = await sb.from('salon_settings').select('*').eq('id', 1).single()
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('loadSettings error:', error)
+      showToast('Could not load settings: ' + error.message, 'error')
+      return
+    }
+
+    if (!data) {
+  const { error: insertErr } = await sb.from('salon_settings').insert({
+    id: 1,
+    salon_name: '',
+    address: null,
+    phone: null,
+    email: null,
+    timezone: 'Europe/Skopje',
+    open_hour: 9,
+    close_hour: 19,
+    min_gap_minutes: 15,
+    auto_approve: false,
+    block_past: true,
+    require_otp: false,
+  })
+  if (insertErr) {
+    console.warn('Could not create default settings row:', insertErr.message)
+    return
+  }
+  // Recursively call loadSettings again to get the newly created row
+  return loadSettings()
+}
+
+    if (data.timezone) SALON_TZ = data.timezone
+    if (data.open_hour != null) SALON_OPEN = data.open_hour
+    if (data.close_hour != null) SALON_CLOSE = data.close_hour
+    if (data.min_gap_minutes != null) SALON_MIN_GAP = data.min_gap_minutes
+    autoApprove = data.auto_approve ?? false
+    blockPast = data.block_past ?? true
+    document.getElementById('cfg-require-otp').checked = data.require_otp ?? false
+
+    document.getElementById('auto-approve-pill').style.display = autoApprove ? 'block' : 'none'
+
+    const cfgName = document.getElementById('cfg-name')
+    if (!cfgName) return
+
+    cfgName.value = data.salon_name || ''
+    document.getElementById('cfg-address').value = data.address || ''
+    document.getElementById('cfg-phone').value = data.phone || ''
+    document.getElementById('cfg-email').value = data.email || ''
+    document.getElementById('cfg-open').value = String(data.open_hour ?? 9).padStart(2, '0') + ':00'
+    document.getElementById('cfg-close').value = String(data.close_hour ?? 19).padStart(2, '0') + ':00'
+    document.getElementById('cfg-gap').value = data.min_gap_minutes ?? 15
+    document.getElementById('cfg-auto-approve').checked = autoApprove
+    document.getElementById('cfg-block-past').checked = blockPast
+
+    if (data.timezone) {
+      let matched = false
+      for (const [country, cities] of Object.entries(TZ_DATA)) {
+        const city = cities.find(c => c.tz === data.timezone)
+        if (city) {
+          document.getElementById('cfg-country').value = country
+          onCountryChange()
+          document.getElementById('cfg-city').value = data.timezone
+          onCityChange()
+          matched = true
+          break
+        }
+      }
+      if (!matched) {
+        document.getElementById('cfg-timezone').value = data.timezone
+        document.getElementById('cfg-tz-display').value = data.timezone
+      }
+    }
+    await loadFaviconSetting()
+
+  } catch (e) {
+    console.error('loadSettings unexpected error:', e)
+    showToast('Settings could not be loaded.', 'error')
+  }
+}
+
+async function saveAutoApprove() {
+  const ap = document.getElementById('cfg-auto-approve').checked
+  const { error } = await sb.from('salon_settings')
+    .upsert({ id: 1, auto_approve: ap }, { onConflict: 'id' })
+
+  if (error) {
+    console.error('saveAutoApprove error:', error)
+    showToast('Failed to save: ' + error.message, 'error')
+    document.getElementById('cfg-auto-approve').checked = !ap
+    return
+  }
+
+  autoApprove = ap
+  document.getElementById('auto-approve-pill').style.display = ap ? 'block' : 'none'
+  updateAutoApproveBanner()
+  showToast(`Auto-approve ${ap ? 'enabled' : 'disabled'} ✓`, 'success')
+}
+
+async function saveBlockPast() {
+  const bp = document.getElementById('cfg-block-past').checked
+  const { error } = await sb.from('salon_settings')
+    .upsert({ id: 1, block_past: bp }, { onConflict: 'id' })
+
+  if (error) {
+    console.error('saveBlockPast error:', error)
+    showToast('Failed to save: ' + error.message, 'error')
+    document.getElementById('cfg-block-past').checked = !bp
+    return
+  }
+
+  blockPast = bp
+  if (document.getElementById('booking-modal').classList.contains('open')) {
+    renderBkCal()
+  }
+  showToast(`Past bookings ${bp ? 'blocked' : 'allowed'} ✓`, 'success')
+}
+
+function updateAutoApproveBanner() {
+  const banner = document.getElementById('bk-auto-banner')
+  if (!banner) return
+  if (autoApprove) {
+    banner.className = 'auto-banner on'
+    banner.textContent = '✓ Auto-approve is ON — new bookings are instantly confirmed'
+  } else {
+    banner.className = 'auto-banner off'
+    banner.textContent = '◎ Auto-approve is OFF — new bookings require manual confirmation'
+  }
+}
+
+async function saveSettingsBtn() {
+  const btn = document.getElementById('save-settings-btn')
+  const originalText = btn.textContent
+  btn.textContent = 'Saving…'
+  btn.disabled = true
+  try {
+    await saveSettings()
+  } catch(e) {
+    console.error('saveSettingsBtn unexpected error:', e)
+    showToast('Unexpected error — check console', 'error')
+  } finally {
+    btn.textContent = originalText
+    btn.disabled = false
+  }
+}
+
+async function saveSettings() {
+  const errEl = document.getElementById('cfg-err')
+  errEl.style.display = 'none'
+  const showCfgErr = (msg) => { errEl.textContent = msg; errEl.style.display = 'block' }
+
+  const name = Validate.sanitizeText(document.getElementById('cfg-name').value, 100)
+  const address = Validate.sanitizeText(document.getElementById('cfg-address').value, 200)
+  const phone = Validate.sanitizeText(document.getElementById('cfg-phone').value, 30)
+  const email = Validate.sanitizeText(document.getElementById('cfg-email').value, 254)
+  const tz = document.getElementById('cfg-timezone').value || SALON_TZ
+  const openH = parseInt(document.getElementById('cfg-open').value.split(':')[0], 10)
+  const closeH = parseInt(document.getElementById('cfg-close').value.split(':')[0], 10)
+  const gap = parseInt(document.getElementById('cfg-gap').value, 10)
+  const ap = document.getElementById('cfg-auto-approve').checked
+  const bp = document.getElementById('cfg-block-past').checked
+
+  if (!name) { showCfgErr('Salon name is required.'); return }
+  if (isNaN(openH)) { showCfgErr('Opening hour is invalid.'); return }
+  if (isNaN(closeH)) { showCfgErr('Closing hour is invalid.'); return }
+  if (closeH <= openH) { showCfgErr('Closing time must be after opening.'); return }
+  if (isNaN(gap) || gap < 5) { showCfgErr('Slot gap must be at least 5 minutes.'); return }
+
+  const payload = {
+    id: 1,
+    salon_name: name,
+    address: address || null,
+    phone: phone || null,
+    email: email || null,
+    timezone: tz,
+    open_hour: openH,
+    close_hour: closeH,
+    min_gap_minutes: gap,
+    auto_approve: ap,
+    block_past: bp,
+  }
+
+  console.log('Saving settings payload:', payload)
+
+  const { error } = await sb.from('salon_settings')
+    .upsert(payload, { onConflict: 'id' })
+
+  if (error) {
+    console.error('saveSettings error:', error)
+    showCfgErr('Save failed — ' + error.message + ' (code: ' + error.code + ')')
+    return
+  }
+
+  SALON_TZ = tz
+  SALON_OPEN = openH
+  SALON_CLOSE = closeH
+  SALON_MIN_GAP = gap
+  autoApprove = ap
+  blockPast = bp
+
+  document.getElementById('auto-approve-pill').style.display = ap ? 'block' : 'none'
+  updateAutoApproveBanner()
+
+  if (document.getElementById('booking-modal').classList.contains('open')) {
+    renderBkCal()
+    if (document.getElementById('bk-date').value) refreshAdminTimeSlots()
+  }
+await loadFaviconSetting()
+  showToast('Settings saved ✓', 'success')
+}
+
+/* ══════════════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════════════ */
+async function loadDashboard() {
+  const sn = salonNow(), today = salonDateStr(sn)
+  const weekStart  = (() => { const d=new Date(sn); d.setDate(sn.getDate()-sn.getDay()); return salonDateStr(d) })()
+  const monthStart = (() => { const d=new Date(sn); d.setDate(1); return salonDateStr(d) })()
+  let q = sb.from('bookings').select('*, service:services(name,price), staff:staff(name)')
+  if (currentStaff?.role === 'staff') q = q.eq('staff_id', currentStaff.id)
+  const { data } = await q.order('appointment_date').order('appointment_time')
+  allBookings = data || []
+
+  // Calendar always loads ALL bookings so every staff member's appointments show
+  if (currentStaff?.role === 'staff') {
+    const { data: calData } = await sb.from('bookings')
+      .select('*, service:services(name,price), staff:staff(name,id)')
+      .order('appointment_date').order('appointment_time')
+    allBookingsForCalendar = calData || []
+  } else {
+    allBookingsForCalendar = allBookings
+  }
+  const todayB  = allBookings.filter(b => b.appointment_date === today)
+  const pending = allBookings.filter(b => b.status === 'pending')
+  const weekB   = allBookings.filter(b => b.appointment_date >= weekStart)
+  const monthB  = allBookings.filter(b => b.appointment_date >= monthStart)
+  document.getElementById('stat-today').textContent   = todayB.length
+  document.getElementById('stat-pending').textContent = pending.length
+  document.getElementById('stat-week').textContent    = weekB.length
+  document.getElementById('stat-month').textContent   = monthB.length
+  const badge = document.getElementById('pending-badge')
+  badge.textContent = pending.length; badge.style.display = pending.length ? 'inline' : 'none'
+  const dot = document.getElementById('bn-pending-dot');
+    if (dot) dot.classList.toggle('show', pending.length > 0);
+  const upcoming = allBookings.filter(b => b.appointment_date >= today && ['pending','confirmed'].includes(b.status)).slice(0,7)
+  const ul = document.getElementById('upcoming-list')
+  ul.innerHTML = upcoming.length ? upcoming.map(b => {
+    const d = new Date(b.appointment_date+'T00:00:00')
+    return `<div class="appt-row">
+      <div class="appt-date-block"><div class="appt-date-day">${d.getDate()}</div><div class="appt-date-month">${d.toLocaleDateString('en-US',{month:'short'})}</div></div>
+      <div class="appt-info"><div class="appt-name">${esc(b.client_name)}</div><div class="appt-meta">${esc(b.service?.name||'—')} · ${esc(b.staff?.name||'—')}</div></div>
+      <div class="appt-right"><div class="appt-time">${fmtTime(b.appointment_time)}</div><span class="badge badge-${esc(b.status)}"><span class="badge-dot"></span>${esc(b.status)}</span></div>
+    </div>`
+  }).join('') : '<div class="no-data">No upcoming bookings</div>'
+  const todaySorted = todayB.sort((a,b)=>a.appointment_time.localeCompare(b.appointment_time))
+  const tl = document.getElementById('today-list')
+  tl.innerHTML = todaySorted.length ? todaySorted.map(b => `
+    <div class="appt-row">
+      <div style="min-width:58px;font-size:11px;color:var(--gold);font-weight:300;flex-shrink:0">${fmtTime(b.appointment_time)}</div>
+      <div class="appt-info"><div class="appt-name">${esc(b.client_name)}</div><div class="appt-meta">${esc(b.service?.name||'—')}</div></div>
+      <span class="badge badge-${esc(b.status)}"><span class="badge-dot"></span>${esc(b.status)}</span>
+    </div>
+  `).join('') : '<div class="no-data" style="padding:20px 0">No appointments today</div>'
+  buildStaffFilter()
+}
+
+function buildStaffFilter() {
+  const staffInBookings = [...new Map(allBookingsForCalendar.filter(b=>b.staff).map(b=>[b.staff_id,b.staff])).values()]
+  allStaffList = staffInBookings
+  const strip = document.getElementById('cal-staff-filter')
+  if (strip) {
+    strip.innerHTML =
+      `<button class="sfs-btn ${calStaffFilter==='all'?'active':''}" onclick="setCalStaff('all')">All</button>` +
+      staffInBookings.map(s => `<button class="sfs-btn ${calStaffFilter===s.id?'active':''}" onclick="setCalStaff('${esc(s.id)}')">${esc(s.name)}</button>`).join('')
+  }
+  const sf = document.getElementById('staff-filter')
+  if (sf) {
+    sf.innerHTML = '<option value="">All Staff</option>' +
+      staffInBookings.map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('')
+  }
+}
+
+function setCalStaff(id) {
+  calStaffFilter = id; buildStaffFilter()
+  if (calView === 'day') renderDayView(); else renderMonthView()
+}
+
+/* ══════════════════════════════════════════════════════
+   BOOKINGS
+══════════════════════════════════════════════════════ */
+async function loadBookings() {
+  let q = sb.from('bookings').select('*, service:services(name,price), staff:staff(name,id)')
+  if (currentStaff?.role === 'staff') q = q.eq('staff_id', currentStaff.id)
+  const { data } = await q.order('appointment_date',{ascending:false}).order('appointment_time',{ascending:false})
+  allBookings = data || []
+
+  // Calendar always needs all bookings regardless of role
+  if (currentStaff?.role === 'staff') {
+    const { data: calData } = await sb.from('bookings')
+      .select('*, service:services(name,price), staff:staff(name,id)')
+      .order('appointment_date',{ascending:false}).order('appointment_time',{ascending:false})
+    allBookingsForCalendar = calData || []
+  } else {
+    allBookingsForCalendar = allBookings
+  }
+  filterBookings(); buildStaffFilter(); updateAutoApproveBanner()
+}
+
+function setStatusFilter(s) {
+  activeStatusFilter = s
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.toggle('active', t.dataset.s === s))
+  filterBookings()
+}
+
+function filterBookings() {
+  const search  = document.getElementById('search-input')?.value.toLowerCase() || ''
+  const staffF  = document.getElementById('staff-filter')?.value || ''
+  const dateF   = document.getElementById('date-filter')?.value || ''
+  const today   = salonDateStr()
+  const tom     = (() => { const d=salonNow(); d.setDate(d.getDate()+1); return salonDateStr(d) })()
+  const weekEnd = (() => { const d=salonNow(); d.setDate(d.getDate()+7); return salonDateStr(d) })()
+  const filtered = allBookings.filter(b => {
+    if (search && !b.client_name.toLowerCase().includes(search) && !(b.client_email||'').toLowerCase().includes(search)) return false
+    if (staffF && b.staff_id !== staffF) return false
+    if (activeStatusFilter && b.status !== activeStatusFilter) return false
+    if (dateF === 'today'    && b.appointment_date !== today) return false
+    if (dateF === 'tomorrow' && b.appointment_date !== tom)   return false
+    if (dateF === 'week'     && (b.appointment_date < today || b.appointment_date > weekEnd)) return false
+    if (dateF === 'past'     && b.appointment_date >= today)  return false
+    return true
+  })
+  renderBookings(filtered)
+}
+
+function renderBookings(bookings) {
+  const tbody = document.getElementById('bookings-tbody')
+  if (!bookings.length) { tbody.innerHTML=`<tr><td colspan="6" class="no-data">No bookings found</td></tr>`; return }
+  const isAdmin = currentStaff?.role !== 'staff'
+  tbody.innerHTML = bookings.map(b => {
+    const date = new Date(b.appointment_date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
+    const actions = buildActions(b, isAdmin)
+    return `<tr>
+      <td>
+        <div class="td-primary">${esc(b.client_name)}</div>
+        <div class="td-secondary">${esc(b.client_email)}</div>
+        <div class="td-secondary">${esc(b.client_phone||'')}</div>
+        ${b.contact_verified ? `<div class="td-secondary" style="color:var(--c-confirmed)">✓ Verified ${b.verification_method ? '('+b.verification_method+')' : ''}</div>` : '<div class="td-secondary" style="color:var(--c-pending)">⚠ Not verified</div>'}
+      </td>
+      <td>
+        <div class="td-primary">${esc(b.service?.name||'—')}</div>
+        <div class="td-secondary">${esc(String(b.duration_minutes))}min</div>
+      </td>
+      <td>
+        <div class="td-primary">${esc(date)}</div>
+        <div class="td-secondary" style="color:var(--gold)">${fmtTime(b.appointment_time)}</div>
+      </td>
+      <td style="font-size:12px">${esc(b.staff?.name||'—')}</td>
+      <td><span class="badge badge-${esc(b.status)}"><span class="badge-dot"></span>${esc(b.status.replace('_',' '))}</span></td>
+      <td><div class="action-btns">${actions}</div></td>
+    </tr>`
+  }).join('')
+
+}
+
+function buildActions(b, isAdmin) {
+  const acts = []
+  const isPast = new Date(b.appointment_date+'T'+b.appointment_time) <= salonNow()
+  const isStaff = currentStaff?.role === 'staff'
+  const isOwn   = b.staff_id === currentStaff?.id
+  if (isAdmin) {
+    // Admin/owner: full control
+    if (b.status==='pending')                              acts.push(`<button class="act-btn confirm" onclick="updateStatus('${esc(b.id)}','confirmed')">Confirm</button>`)
+    if (['pending','confirmed'].includes(b.status))        acts.push(`<button class="act-btn cancel" onclick="updateStatus('${esc(b.id)}','cancelled')">Cancel</button>`)
+    if (b.status==='confirmed'&&isPast)                    acts.push(`<button class="act-btn complete" onclick="updateStatus('${esc(b.id)}','completed')">Complete</button>`)
+    if (b.status==='confirmed'&&isPast)                    acts.push(`<button class="act-btn noshow" onclick="updateStatus('${esc(b.id)}','no_show')">No Show</button>`)
+  } else if (isStaff && isOwn) {
+    // Staff: own appointments only
+    // Confirm once appointment time has started (isPast covers this)
+    if (b.status==='pending'&&(!autoApprove||isPast))        acts.push(`<button class="act-btn confirm" onclick="updateStatus('${esc(b.id)}','confirmed')">Confirm</button>`)
+    if (['pending','confirmed'].includes(b.status))        acts.push(`<button class="act-btn cancel" onclick="updateStatus('${esc(b.id)}','cancelled')">Cancel</button>`)
+    if (b.status==='confirmed'&&isPast)                    acts.push(`<button class="act-btn complete" onclick="updateStatus('${esc(b.id)}','completed')">Complete</button>`)
+    if (b.status==='confirmed'&&isPast)                    acts.push(`<button class="act-btn noshow" onclick="updateStatus('${esc(b.id)}','no_show')">No Show</button>`)
+  }
+  return acts.join('') || '<span style="font-size:11px;color:var(--text-muted)">—</span>'
+}
+
+async function updateStatus(id, status) {
+  const limit = statusLimiter.try()
+  if (!limit.allowed) { showToast(limit.message, 'error'); return }
+  const VALID = ['confirmed','cancelled','completed','no_show']
+  if (!VALID.includes(status)) { showToast('Invalid status.', 'error'); return }
+
+  const isStaff = currentStaff?.role === 'staff'
+  const isAdmin = ['admin','owner'].includes(currentStaff?.role)
+
+  // ── Light client-side guard (RPC enforces server-side too) ────────────────
+  // Look in both own bookings and calendar bookings
+  const booking = allBookings.find(b => b.id === id) || allBookingsForCalendar.find(b => b.id === id)
+  if (!booking) { showToast('Booking not found.', 'error'); return }
+
+  if (isStaff) {
+    if (booking.staff_id !== currentStaff.id) {
+      showToast('You can only update your own appointments.', 'error'); return
+    }
+    if (status === 'confirmed' && autoApprove &&
+        new Date(booking.appointment_date + 'T' + booking.appointment_time) > salonNow()) {
+      showToast('You can only confirm once the appointment time has started.', 'error'); return
+    }
+  }
+
+  // ── DB update via RPC (direct UPDATE is blocked by RLS) ──────────────────
+  const { error } = await sb.rpc('update_booking_status', {
+    booking_id: id,
+    new_status: status
+  })
+
+  if (error) {
+    console.error('updateStatus RPC error:', error)
+    const msg = error.message || ''
+    if (msg.includes('access_denied'))         showToast('You can only update your own appointments.', 'error')
+    else if (msg.includes('invalid_transition')) showToast('That status change is not allowed.', 'error')
+    else if (msg.includes('not_found'))         showToast('Booking not found.', 'error')
+    else showToast('Update failed: ' + msg, 'error')
+    return
+  }
+
+  // ── Fire-and-forget notification ─────────────────────────────────────────
+  ;(async () => {
+    try {
+      if (['confirmed','cancelled'].includes(status)) {
+        const { data: { session } } = await sb.auth.getSession()
+        if (session) {
+          await fetch(`${SUPABASE_URL}/functions/v1/notify-booking`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+            body: JSON.stringify({ booking_id: id, type: 'status_update' })
+          })
+        }
+      }
+    } catch(e) { console.warn('Notification failed (non-critical):', e.message) }
+  })()
+
+  showToast(`Marked as ${status.replace('_',' ')} ✓`, 'success')
+  await loadBookings()
+  await loadDashboard()
+  if (document.getElementById('page-calendar').classList.contains('active')) renderCalendarPage()
+  const ds = document.getElementById('day-sidebar')
+  if (ds.classList.contains('open') && ds.dataset.date) openDaySidebar(ds.dataset.date)
+}
+
+/* ══════════════════════════════════════════════════════
+   CALENDAR
+══════════════════════════════════════════════════════ */
+function renderCalendarPage() {
+  buildStaffFilter()
+  if (calView === 'day') renderDayView(); else renderMonthView()
+}
+
+function setCalView(v) {
+  calView = v
+  document.getElementById('btn-month').classList.toggle('active', v==='month')
+  document.getElementById('btn-day').classList.toggle('active', v==='day')
+  if (v==='day') calDayDate = new Date(calDate)
+  renderCalendarPage()
+}
+
+function calNav(dir) {
+  if (calView==='month') calDate.setMonth(calDate.getMonth()+dir)
+  else { calDayDate.setDate(calDayDate.getDate()+dir); calDate = new Date(calDayDate) }
+  renderCalendarPage()
+}
+function calGoToday() { calDate = new Date(); calDayDate = new Date(); renderCalendarPage() }
+
+function renderMonthView() {
+  const year = calDate.getFullYear(), month = calDate.getMonth(), today = salonDateStr()
+  document.getElementById('cal-page-title').textContent = calDate.toLocaleDateString('en-US',{month:'long',year:'numeric'})
+  document.getElementById('cal-page-sub').textContent = ''
+  const firstDay = new Date(year,month,1).getDay()
+  const daysInMonth = new Date(year,month+1,0).getDate()
+  const prevDays = new Date(year,month,0).getDate()
+  const byDate = {}
+  allBookingsForCalendar.forEach(b => {
+    if (calStaffFilter !== 'all' && b.staff_id !== calStaffFilter) return
+    if (!byDate[b.appointment_date]) byDate[b.appointment_date]=[]
+    byDate[b.appointment_date].push(b)
+  })
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+  let html = `<div class="month-grid-wrap"><div class="month-grid-head">${days.map(d=>`<span>${d}</span>`).join('')}</div><div class="month-grid">`
+  for (let i=0;i<firstDay;i++) html+=`<div class="month-cell other-month"><div class="mc-day">${prevDays-firstDay+1+i}</div></div>`
+  for (let d=1;d<=daysInMonth;d++) {
+    const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    const isToday=dateStr===today
+    const dayBookings=(byDate[dateStr]||[]).sort((a,b)=>a.appointment_time.localeCompare(b.appointment_time))
+    const MAX_SHOW=3
+    let eventsHtml=dayBookings.slice(0,MAX_SHOW).map(b=>
+      `<div class="mc-event ${esc(b.status)}" onclick="event.stopPropagation();openDaySidebar('${esc(dateStr)}')" title="${esc(b.client_name)} · ${fmtTime(b.appointment_time)}">${fmtTime(b.appointment_time)} ${esc(b.client_name)}</div>`
+    ).join('')
+    if (dayBookings.length>MAX_SHOW) eventsHtml+=`<div class="mc-more">+${dayBookings.length-MAX_SHOW} more</div>`
+    html+=`<div class="month-cell${isToday?' today':''}" onclick="openDaySidebar('${esc(dateStr)}')"><div class="mc-day">${d}</div>${eventsHtml}</div>`
+  }
+  const remaining=(7-(firstDay+daysInMonth)%7)%7
+  for (let i=1;i<=remaining;i++) html+=`<div class="month-cell other-month"><div class="mc-day">${i}</div></div>`
+  html+='</div></div>'
+  document.getElementById('cal-container').innerHTML = html
+}
+
+function renderDayView() {
+  const today = salonDateStr(), dateStr = salonDateStr(calDayDate)
+  document.getElementById('cal-page-title').textContent = calDayDate.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})
+  document.getElementById('cal-page-sub').textContent = dateStr===today ? 'Today' : ''
+  const dayBookings = allBookingsForCalendar.filter(b => {
+    if (b.appointment_date !== dateStr) return false
+    if (calStaffFilter === 'all') return true
+    return b.staff_id === calStaffFilter
+  })
+  const sn = salonNow(), nowMins = sn.getHours()*60+sn.getMinutes(), isToday = dateStr===salonDateStr(sn)
+  const OPEN=SALON_OPEN, CLOSE=SALON_CLOSE, totalHours=CLOSE-OPEN, PX_PER_HR=60
+  let timesHtml='', slotsHtml=''
+  for (let h=OPEN;h<CLOSE;h++) {
+    const label = h===12?'12 PM':h>12?`${h-12} PM`:`${h} AM`
+    timesHtml+=`<div class="day-time-label">${label}</div>`
+    slotsHtml+=`<div class="day-hour-slot" data-h="${h}"></div>`
+  }
+  let nowLineHtml=''
+  if (isToday&&nowMins>=OPEN*60&&nowMins<CLOSE*60) {
+    const pct=((nowMins-OPEN*60)/(totalHours*60))*100
+    nowLineHtml=`<div class="now-line" style="top:${pct}%"></div>`
+  }
+  const isAdmin = currentStaff?.role!=='staff'
+  let apptHtml=''
+  dayBookings.forEach(b => {
+    const [bh,bm]=b.appointment_time.substring(0,5).split(':').map(Number)
+    const startMin=bh*60+bm
+    const top=((startMin-OPEN*60)/(totalHours*60))*100
+    const height=(b.duration_minutes/(totalHours*60))*100
+    const isPast=new Date(b.appointment_date+'T'+b.appointment_time)<=salonNow()
+    const acts=[]
+    const isStaffDV = currentStaff?.role === 'staff'
+    const isOwnDV   = b.staff_id === currentStaff?.id
+    if (isAdmin) {
+      if (b.status==='pending') acts.push(`<button class="dab-btn confirm" onclick="event.stopPropagation();updateStatus('${esc(b.id)}','confirmed')">Confirm</button>`)
+      if (['pending','confirmed'].includes(b.status)) acts.push(`<button class="dab-btn cancel" onclick="event.stopPropagation();updateStatus('${esc(b.id)}','cancelled')">Cancel</button>`)
+      if (b.status==='confirmed'&&isPast) acts.push(`<button class="dab-btn complete" onclick="event.stopPropagation();updateStatus('${esc(b.id)}','completed')">Done</button>`)
+      if (b.status==='confirmed'&&isPast) acts.push(`<button class="dab-btn noshow" onclick="event.stopPropagation();updateStatus('${esc(b.id)}','no_show')">No Show</button>`)
+    } else if (isStaffDV && isOwnDV) {
+      if (b.status==='pending'&&(!autoApprove||isPast)) acts.push(`<button class="dab-btn confirm" onclick="event.stopPropagation();updateStatus('${esc(b.id)}','confirmed')">Confirm</button>`)
+      if (['pending','confirmed'].includes(b.status)) acts.push(`<button class="dab-btn cancel" onclick="event.stopPropagation();updateStatus('${esc(b.id)}','cancelled')">Cancel</button>`)
+      if (b.status==='confirmed'&&isPast) acts.push(`<button class="dab-btn complete" onclick="event.stopPropagation();updateStatus('${esc(b.id)}','completed')">Done</button>`)
+      if (b.status==='confirmed'&&isPast) acts.push(`<button class="dab-btn noshow" onclick="event.stopPropagation();updateStatus('${esc(b.id)}','no_show')">No Show</button>`)
+    }
+    const showDetails=b.duration_minutes>=30
+    apptHtml+=`<div class="day-appt-block ${esc(b.status)}" style="top:${top}%;height:${Math.max(height,3)}%" onclick="openDaySidebar('${esc(dateStr)}')">
+      <div class="dab-name">${esc(b.client_name)}</div>
+      ${showDetails?`<div class="dab-svc">${esc(b.service?.name||'')} · ${fmtTime(b.appointment_time)}</div>`:''}
+      ${acts.length&&showDetails?`<div class="dab-actions">${acts.join('')}</div>`:''}
+    </div>`
+  })
+  const totalPx=totalHours*PX_PER_HR
+  document.getElementById('cal-container').innerHTML=`
+    <div class="day-view-wrap">
+      <div class="day-view-header">
+        <div class="day-view-date">${calDayDate.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div>
+        <div class="day-view-count">${dayBookings.length} appointment${dayBookings.length!==1?'s':''}</div>
+        <button class="act-btn" style="margin-left:auto" onclick="openDaySidebar('${esc(dateStr)}')">View Details</button>
+        ${isAdmin ? `<button class="add-btn" onclick="openModal('booking');setModalDate('${esc(dateStr)}')">+ Add</button>` : ''}
+      </div>
+      <div class="day-view-body">
+        <div class="day-time-col" style="height:${totalPx}px">${timesHtml}</div>
+        <div class="day-events-col" style="height:${totalPx}px;position:relative">${slotsHtml}${nowLineHtml}${apptHtml}</div>
+      </div>
+    </div>`
+}
+
+function openDaySidebar(dateStr) {
+  const d = new Date(dateStr+'T00:00:00')
+  const label = d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})
+  const dayBookings = allBookingsForCalendar.filter(b => {
+    if (b.appointment_date !== dateStr) return false
+    if (calStaffFilter === 'all') return true
+    return b.staff_id === calStaffFilter
+  }).sort((a,b)=>a.appointment_time.localeCompare(b.appointment_time))
+  document.getElementById('dsh-date').textContent = label
+  document.getElementById('dsh-sub').textContent = `${dayBookings.length} appointment${dayBookings.length!==1?'s':''}`
+  const ds = document.getElementById('day-sidebar'); ds.dataset.date = dateStr
+  const isAdmin = currentStaff?.role!=='staff'
+  const body = document.getElementById('dsh-body')
+  body.innerHTML = dayBookings.length ? dayBookings.map(b => {
+    const isPast=new Date(b.appointment_date+'T'+b.appointment_time)<=salonNow()
+    const acts=[]
+    const isStaffDS = currentStaff?.role === 'staff'
+    const isOwnDS   = b.staff_id === currentStaff?.id
+    if (isAdmin) {
+      if (b.status==='pending') acts.push(`<button class="act-btn confirm" onclick="updateStatus('${esc(b.id)}','confirmed')">Confirm</button>`)
+      if (['pending','confirmed'].includes(b.status)) acts.push(`<button class="act-btn cancel" onclick="updateStatus('${esc(b.id)}','cancelled')">Cancel</button>`)
+      if (b.status==='confirmed'&&isPast) acts.push(`<button class="act-btn complete" onclick="updateStatus('${esc(b.id)}','completed')">Complete</button>`)
+      if (b.status==='confirmed'&&isPast) acts.push(`<button class="act-btn noshow" onclick="updateStatus('${esc(b.id)}','no_show')">No Show</button>`)
+    } else if (isStaffDS && isOwnDS) {
+      if (b.status==='pending'&&(!autoApprove||isPast)) acts.push(`<button class="act-btn confirm" onclick="updateStatus('${esc(b.id)}','confirmed')">Confirm</button>`)
+      if (['pending','confirmed'].includes(b.status)) acts.push(`<button class="act-btn cancel" onclick="updateStatus('${esc(b.id)}','cancelled')">Cancel</button>`)
+      if (b.status==='confirmed'&&isPast) acts.push(`<button class="act-btn complete" onclick="updateStatus('${esc(b.id)}','completed')">Complete</button>`)
+      if (b.status==='confirmed'&&isPast) acts.push(`<button class="act-btn noshow" onclick="updateStatus('${esc(b.id)}','no_show')">No Show</button>`)
+    }
+    const isReadOnly = !isAdmin && !(isStaffDS && isOwnDS)
+    return `<div class="day-appt-card ${esc(b.status)}${isReadOnly?' readonly-card':''}">
+      <div class="dac-time">${fmtTime(b.appointment_time)} · ${esc(String(b.duration_minutes))}min</div>
+      <div class="dac-name">${esc(b.client_name)}</div>
+      <div class="dac-detail">${esc(b.service?.name||'—')} · ${esc(b.staff?.name||'—')}</div>
+      ${isAdmin?`<div class="dac-detail">${esc(b.client_email)} · ${esc(b.client_phone||'—')}</div>`:''}
+      ${b.notes?`<div class="dac-detail" style="margin-top:4px;font-style:italic">Note: ${esc(b.notes)}</div>`:''}
+      <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+        <span class="badge badge-${esc(b.status)}"><span class="badge-dot"></span>${esc(b.status.replace('_',' '))}</span>
+        ${isReadOnly?`<span style="font-size:10px;color:var(--text-muted);letter-spacing:1px">VIEW ONLY</span>`:''}
+      </div>
+      ${acts.length?`<div class="dac-actions">${acts.join('')}</div>`:''}
+    </div>`
+  }).join('') : '<div class="no-data" style="padding:40px 0">No appointments this day</div>'
+  const dshAddBtn = document.getElementById('dsh-add-btn')
+  if (['admin','owner'].includes(currentStaff?.role)) {
+    dshAddBtn.style.display = 'block'
+    dshAddBtn.onclick = async () => { closeDaySidebar(); await openModal('booking'); setModalDate(dateStr) }
+  } else {
+    dshAddBtn.style.display = 'none'
+  }
+  ds.classList.add('open')
+  document.getElementById('day-sidebar-overlay').classList.add('open')
+}
+
+function closeDaySidebar() {
+  document.getElementById('day-sidebar').classList.remove('open')
+  document.getElementById('day-sidebar-overlay').classList.remove('open')
+}
+
+/* ══════════════════════════════════════════════════════
+   BOOKING MODAL CALENDAR
+══════════════════════════════════════════════════════ */
+let bkCalCursor = new Date()
+
+function bkCalNav(dir) {
+  bkCalCursor = new Date(bkCalCursor.getFullYear(), bkCalCursor.getMonth()+dir, 1); renderBkCal()
+}
+
+function renderBkCal() {
+  const year=bkCalCursor.getFullYear(), month=bkCalCursor.getMonth()
+  const todayStr=salonDateStr(), selectedStr=document.getElementById('bk-date').value
+  document.getElementById('bk-cal-month-label').textContent=bkCalCursor.toLocaleDateString('en-US',{month:'long',year:'numeric'})
+  const firstDay=new Date(year,month,1).getDay(), daysInMonth=new Date(year,month+1,0).getDate(), prevDays=new Date(year,month,0).getDate()
+  let html=''
+  for (let i=0;i<firstDay;i++) html+=`<div class="bk-cal-day bk-cd-empty" style="opacity:.18">${prevDays-firstDay+1+i}</div>`
+  for (let d=1;d<=daysInMonth;d++) {
+    const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    const isToday=dateStr===todayStr, isPast=dateStr<todayStr&&blockPast, isSel=dateStr===selectedStr
+    let cls='bk-cal-day'
+    if (isPast) cls+=' bk-cd-disabled'
+    if (isToday) cls+=' bk-cd-today'
+    if (isSel) cls+=' bk-cd-selected'
+    html+=`<div class="${cls}" ${isPast?'':` onclick="selectBkDate('${dateStr}')"`}>${d}</div>`
+  }
+  const rem=(7-((firstDay+daysInMonth)%7))%7
+  for (let i=1;i<=rem;i++) html+=`<div class="bk-cal-day bk-cd-empty" style="opacity:.18">${i}</div>`
+  document.getElementById('bk-cal-grid').innerHTML = html
+}
+
+function selectBkDate(dateStr) {
+  document.getElementById('bk-date').value = dateStr
+  document.getElementById('bk-time').value = ''
+  const isPast = dateStr < salonDateStr()
+  const warn = document.getElementById('bk-past-warn')
+  if (warn) warn.style.display = (isPast && !blockPast) ? 'block' : 'none'
+  renderBkCal(); refreshAdminTimeSlots()
+}
+
+async function openModal(type) {
+  if (type==='booking') {
+    document.getElementById('bk-modal-title').textContent = 'Add Appointment'
+    document.getElementById('bk-date').value = ''
+    document.getElementById('bk-time').value = ''
+    document.getElementById('bk-time-grid').innerHTML = ''
+    document.getElementById('bk-time-label').textContent = '← Pick a date'
+    document.getElementById('bk-past-warn').style.display = 'none'
+    document.getElementById('bk-err').classList.remove('show')
+    bkCalCursor = new Date(salonNow()); bkCalCursor.setDate(1); renderBkCal()
+    const { data:svcs } = await sb.from('services').select('id,name,duration_minutes,price').eq('is_active',true).order('name')
+    document.getElementById('bk-service').innerHTML = svcs
+      ? svcs.map(s=>`<option value="${esc(s.id)}" data-duration="${s.duration_minutes}">${esc(s.name)} (${s.duration_minutes}min · $${parseFloat(s.price).toFixed(2)})</option>`).join('')
+      : '<option>No services</option>'
+    const { data:stf } = await sb.from('staff').select('id,name').eq('is_active',true).order('name')
+    document.getElementById('bk-staff').innerHTML = '<option value="">Any Available</option>' +
+      (stf?stf.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join(''):'')
+    document.getElementById('bk-service').onchange = refreshAdminTimeSlots
+    document.getElementById('bk-staff').onchange   = refreshAdminTimeSlots
+  }
+  document.getElementById(type+'-modal').classList.add('open')
+}
+
+function closeModal(type) { document.getElementById(type+'-modal').classList.remove('open') }
+
+function setModalDate(dateStr) {
+  const d = new Date(dateStr+'T00:00:00')
+  bkCalCursor = new Date(d.getFullYear(), d.getMonth(), 1)
+  renderBkCal(); selectBkDate(dateStr)
+}
+
+async function refreshAdminTimeSlots() {
+  const date    = document.getElementById('bk-date').value
+  const svcOpt  = document.getElementById('bk-service').selectedOptions[0]
+  const staffId = document.getElementById('bk-staff').value
+  const grid    = document.getElementById('bk-time-grid')
+  const label   = document.getElementById('bk-time-label')
+
+  if (!date || !svcOpt) { grid.innerHTML = ''; label.textContent = '← Pick a date'; return }
+  const duration = parseInt(svcOpt.dataset.duration) || 60
+
+  grid.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:6px 0">Loading…</div>'
+  label.textContent = new Date(date+'T00:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})
+
+  function toMins(t){ const[h,m]=t.substring(0,5).split(':').map(Number); return h*60+m }
+
+  // Get all bookings on this date from the already-loaded full calendar cache
+  const dayBookings = allBookingsForCalendar.filter(b =>
+    b.appointment_date === date && ['pending','confirmed','completed'].includes(b.status)
+  )
+
+  // Fetch any manual blocks for this date
+  const { data: blocksData } = await sb.from('staff_blocks')
+    .select('staff_id, start_time, end_time')
+    .eq('block_date', date)
+  const staffBlocks = blocksData || []
+
+  // Get all active staff
+  const { data: allStaff } = await sb.from('staff').select('id,role').eq('is_active', true)
+  const staff = allStaff || []
+  const staffIds = staffId ? [staffId] : staff.map(s => s.id)
+
+  const OPEN_M = SALON_OPEN * 60, CLOSE_M = SALON_CLOSE * 60, GAP = SALON_MIN_GAP
+  const sn = salonNow(), nowMins = sn.getHours()*60+sn.getMinutes(), isToday = date === salonDateStr(sn)
+
+  // Build a set of free slots — a slot is free if at least one staff member has no overlap
+  const freeSlots = []
+  for (let start = OPEN_M; start + duration <= CLOSE_M; start += GAP) {
+    if (isToday && start <= nowMins + 30) continue
+    const end = start + duration
+    const freeStaff = staffIds.filter(sid => {
+      // Blocked by an existing booking?
+      const bookedOut = dayBookings.some(b => {
+        if (b.staff_id !== sid) return false
+        const bS = toMins(b.appointment_time), bE = bS + b.duration_minutes
+        return start < bE && end > bS
+      })
+      if (bookedOut) return false
+
+      // Blocked by a manual time block?
+      const blockedOut = staffBlocks.some(bl => {
+        if (bl.staff_id !== sid) return false
+        const blS = toMins(bl.start_time), blE = toMins(bl.end_time)
+        return start < blE && end > blS
+      })
+      return !blockedOut
+    })
+    if (freeStaff.length > 0) freeSlots.push(start)
+  }
+
+  const selectedTime = document.getElementById('bk-time').value
+  if (!freeSlots.length) {
+    grid.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:6px 0;grid-column:1/-1">No slots available</div>'
+    return
+  }
+  grid.innerHTML = freeSlots.map(m => {
+    const t = String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0')
+    const sel = t === selectedTime ? ' bk-ts-selected' : ''
+    return `<div class="bk-time-slot${sel}" onclick="selectBkTime('${t}',this)">${fmtTime(t)}</div>`
+  }).join('')
+}
+
+function selectBkTime(t, el) {
+  document.getElementById('bk-time').value = t
+  document.querySelectorAll('#bk-time-grid .bk-time-slot').forEach(s=>s.classList.remove('bk-ts-selected'))
+  el.classList.add('bk-ts-selected')
+}
+
+async function saveBooking() {
+  if (currentStaff?.role === 'staff') { showToast('Only admin or owner can create appointments.', 'error'); return }
+  const bkLimit = bookingLimiter.try()
+  if (!bkLimit.allowed) { showToast(bkLimit.message, 'error'); return }
+  const err = document.getElementById('bk-err'); err.classList.remove('show')
+  const { error, values } = Validate.collect({
+    name:  Validate.name(document.getElementById('bk-name').value),
+    email: Validate.email(document.getElementById('bk-email').value),
+    phone: Validate.phone(document.getElementById('bk-phone').value),
+    date:  Validate.date(document.getElementById('bk-date').value),
+    time:  Validate.time(document.getElementById('bk-time').value),
+    notes: Validate.notes(document.getElementById('bk-notes').value),
+  })
+  if (error) { showErr(err, error); return }
+  const serviceId=document.getElementById('bk-service').value
+  let staffId=document.getElementById('bk-staff').value
+  if (!serviceId) { showErr(err,'Please select a service.'); return }
+  if (blockPast&&values.date<salonDateStr()) { showErr(err,'Cannot create past appointments.'); return }
+  const svcOpt=document.getElementById('bk-service').selectedOptions[0]
+  const duration=parseInt(svcOpt?.dataset.duration||60)
+  const apptTimeFmt=values.time.length===5?values.time+':00':values.time
+  function toMins(t){const[h,m]=t.substring(0,5).split(':').map(Number);return h*60+m}
+
+  if (!staffId) {
+    function toMins2(t){ const[h,m]=t.substring(0,5).split(':').map(Number); return h*60+m }
+    const slotStart = toMins2(values.time), slotEnd = slotStart + duration
+
+    // Fresh DB query — don't use cache, we need live data
+    const { data: allStaff } = await sb.from('staff').select('id,name,role').eq('is_active', true)
+    const everyone = allStaff || []
+    console.log('All active staff in DB:', JSON.stringify(everyone.map(s=>({id:s.id,name:s.name,role:s.role}))))
+
+    // Fresh bookings query for this date
+    const { data: freshDayBk } = await sb.from('bookings')
+      .select('staff_id,appointment_time,duration_minutes')
+      .eq('appointment_date', values.date)
+      .in('status', ['pending','confirmed','completed'])
+    const dayBk = freshDayBk || []
+    console.log('Bookings on', values.date, ':', JSON.stringify(dayBk))
+
+    // Find who has no conflict at this slot
+    const freeStaff = everyone.filter(s => {
+      const theirBk = dayBk.filter(b => b.staff_id === s.id)
+      const busy = theirBk.some(b => {
+        const bS = toMins2(b.appointment_time), bE = bS + b.duration_minutes
+        return slotStart < bE && slotEnd > bS
+      })
+      console.log(s.name, '('+s.role+')', busy ? 'BUSY' : 'FREE', 'their bookings:', theirBk.length)
+      return !busy
+    })
+
+    console.log('Free staff:', freeStaff.map(s=>s.name))
+
+    if (freeStaff.length === 0) {
+      showErr(err, 'No staff available at that time.'); return
+    }
+
+    // Pick randomly — no role filter, just pick anyone free
+    const picked = freeStaff[Math.floor(Math.random() * freeStaff.length)]
+    staffId = picked.id
+    console.log('Picked:', picked.name, picked.role, picked.id)
+  }
+
+  if (!staffId) { showErr(err, 'Could not assign a staff member.'); return }
+
+  // Fetch the assigned staff member's name for the toast
+  let assignedName = ''
+  const { data: assignedStaff } = await sb.from('staff').select('name').eq('id', staffId).single()
+  if (assignedStaff) assignedName = assignedStaff.name
+
+  const wasAutoAssigned = !document.getElementById('bk-staff').value
+
+  const { error:dbError } = await sb.from('bookings').insert({
+    staff_id: staffId, service_id: serviceId,
+    client_name:values.name, client_email:values.email, client_phone:values.phone,
+    appointment_date:values.date, appointment_time:apptTimeFmt,
+    duration_minutes:duration, notes:values.notes,
+    any_staff: false,
+    source: 'admin',
+    status: autoApprove ? 'confirmed' : 'pending'
+  })
+  if (dbError){
+    console.error('saveBooking insert error:', JSON.stringify(dbError))
+    showErr(err, dbError.message || dbError.code || JSON.stringify(dbError))
+    return
+  }
+  closeModal('booking')
+  ;['bk-name','bk-email','bk-phone','bk-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''})
+  const toastMsg = wasAutoAssigned && assignedName
+    ? `Assigned to ${assignedName} ✓`
+    : 'Appointment added ✓'
+  showToast(toastMsg, 'success')
+  await loadBookings(); await loadDashboard()
+  if (document.getElementById('page-calendar').classList.contains('active')) renderCalendarPage()
+}
+
+/* ══════════════════════════════════════════════════════
+   SERVICES
+══════════════════════════════════════════════════════ */
+const VALID_CATEGORIES = ['manicure','pedicure','acrylic','gel','dip','art','general']
+
+function resetServiceModal() {
+  editingServiceId = null
+  document.getElementById('svc-modal-title').textContent = 'Add Service'
+  document.getElementById('svc-save-btn').textContent = 'Save'
+  document.getElementById('svc-save-btn').onclick = saveService
+  document.getElementById('svc-name').value = ''
+  document.getElementById('svc-desc').value = ''
+  document.getElementById('svc-err').classList.remove('show')
+}
+
+async function loadServices() {
+  const { data } = await sb.from('services').select('*').order('category').order('price')
+  const tbody = document.getElementById('services-tbody')
+  if (!data?.length){tbody.innerHTML=`<tr><td colspan="6" class="no-data">No services found.</td></tr>`;return}
+  tbody.innerHTML=data.map(s=>`<tr>
+    <td style="font-weight:400">${esc(s.name)}${s.description?`<br><span style="font-size:11px;color:var(--text-muted)">${esc(s.description)}</span>`:''}</td>
+    <td style="text-transform:capitalize">${esc(s.category)}</td>
+    <td>${esc(String(s.duration_minutes))} min</td>
+    <td style="color:var(--gold)">$${parseFloat(s.price).toFixed(2)}</td>
+    <td><span class="badge badge-${s.is_active?'confirmed':'cancelled'}">${s.is_active?'Active':'Inactive'}</span></td>
+    <td><div class="action-btns">
+      <button class="act-btn confirm" onclick="editService('${esc(s.id)}')">Edit</button>
+      <button class="act-btn cancel" onclick="deleteService('${esc(s.id)}','${esc(s.name)}')">Delete</button>
+    </div></td>
+  </tr>`).join('')
+}
+
+async function editService(id) {
+  const { data:s } = await sb.from('services').select('*').eq('id',id).single()
+  if (!s) return
+  editingServiceId = id
+  document.getElementById('svc-modal-title').textContent = 'Edit Service'
+  document.getElementById('svc-name').value     = s.name
+  document.getElementById('svc-duration').value = s.duration_minutes
+  document.getElementById('svc-price').value    = s.price
+  document.getElementById('svc-category').value = s.category
+  document.getElementById('svc-desc').value     = s.description||''
+  document.getElementById('svc-save-btn').textContent = 'Update Service'
+  document.getElementById('svc-save-btn').onclick = () => updateService(id)
+  document.getElementById('service-modal').classList.add('open')
+}
+
+async function updateService(id) {
+  const wl = writeLimiter.try()
+  if (!wl.allowed) { showToast(wl.message, 'error'); return }
+  const err = document.getElementById('svc-err'); err.classList.remove('show')
+  const { error, values } = Validate.collect({
+    name:     Validate.name(document.getElementById('svc-name').value),
+    duration: Validate.duration(document.getElementById('svc-duration').value),
+    price:    Validate.price(document.getElementById('svc-price').value),
+    notes:    Validate.notes(document.getElementById('svc-desc').value),
+  })
+  if (error){showErr(err,error);return}
+  const category=document.getElementById('svc-category').value
+  if (!VALID_CATEGORIES.includes(category)){showErr(err,'Invalid category.');return}
+  const { error:dbError } = await sb.from('services').update({name:values.name,duration_minutes:values.duration,price:values.price,category,description:values.notes}).eq('id',id)
+  if (dbError){
+    console.error('saveBooking insert error:', JSON.stringify(dbError))
+    showErr(err, dbError.message || dbError.code || JSON.stringify(dbError))
+    return
+  }
+  resetServiceModal(); closeModal('service')
+  showToast('Service updated ✓','success'); loadServices()
+}
+
+async function deleteService(id, name) {
+  if (!confirm(`Delete "${name}"? This will affect existing bookings.`)) return
+  const { error } = await sb.from('services').delete().eq('id',id)
+  if (error){showToast('Error: '+safeDbError(error),'error');return}
+  showToast('Service deleted ✓','success'); loadServices()
+}
+
+async function saveService() {
+  const wl = writeLimiter.try()
+  if (!wl.allowed) { showToast(wl.message, 'error'); return }
+  const err=document.getElementById('svc-err'); err.classList.remove('show')
+  const { error, values } = Validate.collect({
+    name:     Validate.name(document.getElementById('svc-name').value),
+    duration: Validate.duration(document.getElementById('svc-duration').value),
+    price:    Validate.price(document.getElementById('svc-price').value),
+    notes:    Validate.notes(document.getElementById('svc-desc').value),
+  })
+  if (error){showErr(err,error);return}
+  const category=document.getElementById('svc-category').value
+  if (!VALID_CATEGORIES.includes(category)){showErr(err,'Invalid category.');return}
+  const { error:dbError } = await sb.from('services').insert({name:values.name,duration_minutes:values.duration,price:values.price,category,description:values.notes,is_active:true})
+  if (dbError){
+    console.error('saveBooking insert error:', JSON.stringify(dbError))
+    showErr(err, dbError.message || dbError.code || JSON.stringify(dbError))
+    return
+  }
+  resetServiceModal(); closeModal('service')
+  showToast('Service added ✓','success'); loadServices()
+}
+
+/* ══════════════════════════════════════════════════════
+   STAFF
+══════════════════════════════════════════════════════ */
+const VALID_ROLES = ['staff','admin','owner']
+
+async function loadStaff() {
+  const { data } = await sb.from('staff').select('*').order('role').order('name')
+  const tbody=document.getElementById('staff-tbody')
+  if (!data?.length){tbody.innerHTML=`<tr><td colspan="4" class="no-data">No team members yet.</td></tr>`;return}
+  tbody.innerHTML=data.map(s=>{
+    const avatar=s.avatar_url
+      ?`<img src="${esc(s.avatar_url)}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:10px">`
+      :`<span style="display:inline-flex;width:34px;height:34px;border-radius:50%;background:var(--gold-dim);border:1px solid var(--gold-border);align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:17px;color:var(--gold);margin-right:10px;vertical-align:middle;flex-shrink:0">${esc((s.name||'?').charAt(0).toUpperCase())}</span>`
+    return `<tr>
+      <td><div style="display:flex;align-items:center">${avatar}<div><div class="td-primary">${esc(s.name)}</div>${s.bio?`<div class="td-secondary">${esc(s.bio)}</div>`:''}</div></div></td>
+      <td style="font-size:12px">${esc(s.email)}<br><span class="td-secondary">${esc(s.phone||'')}</span></td>
+      <td style="text-transform:capitalize;font-size:12px">${esc(s.role)}</td>
+      <td><div class="action-btns">
+        <button class="act-btn confirm" onclick='openEditStaff(${JSON.stringify({id:s.id,name:s.name,email:s.email,phone:s.phone,role:s.role,bio:s.bio,avatar_url:s.avatar_url}).replace(/'/g,"&#39;")})'>Edit</button>
+        <button class="act-btn cancel" onclick="deleteStaff('${esc(s.id)}','${esc(s.name)}')">Delete</button>
+      </div></td>
+    </tr>`
+  }).join('')
+}
+
+function openEditStaff(s) {
+  editingStaffId=s.id; stAvatarDataUrl=s.avatar_url||null; stAvatarFile=null
+  document.getElementById('staff-modal-title').textContent='Edit Staff Member'
+  document.getElementById('st-name').value  = s.name||''
+  document.getElementById('st-email').value = s.email||''
+  document.getElementById('st-phone').value = s.phone||''
+  document.getElementById('st-bio').value   = s.bio||''
+  document.getElementById('st-role').value  = s.role||'staff'
+  const circle=document.getElementById('st-avatar-preview'), overlay=circle.querySelector('.upload-icon-overlay')
+  circle.innerHTML=''
+  if (s.avatar_url){const img=document.createElement('img');img.src=s.avatar_url;img.alt='';circle.appendChild(img)}
+  else{const span=document.createElement('span');span.id='st-avatar-initial';span.textContent=(s.name||'?').charAt(0).toUpperCase();circle.appendChild(span)}
+  if (overlay) circle.appendChild(overlay)
+  document.getElementById('staff-modal').classList.add('open')
+}
+
+function resetStaffModal() {
+  editingStaffId=null; stAvatarDataUrl=null; stAvatarFile=null
+  document.getElementById('staff-modal-title').textContent='Add Staff Member'
+  ;['st-name','st-email','st-phone','st-bio'].forEach(id=>{document.getElementById(id).value=''})
+  document.getElementById('st-role').value='staff'
+  document.getElementById('st-avatar-file').value=''
+  document.getElementById('st-err').classList.remove('show')
+  const circle=document.getElementById('st-avatar-preview'), overlay=circle.querySelector('.upload-icon-overlay')
+  circle.innerHTML=''
+  const span=document.createElement('span');span.id='st-avatar-initial';span.textContent='+';circle.appendChild(span)
+  if (overlay) circle.appendChild(overlay)
+}
+
+async function saveStaff() {
+  const wl = writeLimiter.try()
+  if (!wl.allowed) { showToast(wl.message, 'error'); return }
+  const err=document.getElementById('st-err'); err.classList.remove('show')
+  const { error, values } = Validate.collect({
+    name:  Validate.name(document.getElementById('st-name').value),
+    email: Validate.email(document.getElementById('st-email').value),
+    phone: Validate.phone(document.getElementById('st-phone').value, false),
+    notes: Validate.notes(document.getElementById('st-bio').value),
+  })
+  if (error){showErr(err,error);return}
+  const role=document.getElementById('st-role').value
+  if (!VALID_ROLES.includes(role)){showErr(err,'Invalid role.');return}
+  const { data:existing } = await sb.from('staff').select('id').eq('email',values.email)
+  const dup=(existing||[]).find(r=>r.id!==editingStaffId)
+  if (dup){showErr(err,'A staff member with this email already exists.');return}
+  let avatarUrl=stAvatarDataUrl
+  if (stAvatarFile){
+    try{
+      const uploadId=editingStaffId||`new-${Date.now()}`
+      avatarUrl=await uploadAvatarToStorage(stAvatarFile,uploadId)
+    }catch(e){showErr(err,'Avatar upload failed: '+e.message);return}
+  }
+  const payload={name:values.name,email:values.email,phone:values.phone,role,bio:values.notes,avatar_url:avatarUrl||null,is_active:true}
+  let dbError
+  if (editingStaffId){const{error:e}=await sb.from('staff').update(payload).eq('id',editingStaffId);dbError=e}
+  else{const{error:e}=await sb.from('staff').insert(payload);dbError=e}
+  if (dbError){
+    console.error('saveBooking insert error:', JSON.stringify(dbError))
+    showErr(err, dbError.message || dbError.code || JSON.stringify(dbError))
+    return
+  }
+  closeModal('staff'); resetStaffModal()
+  showToast(editingStaffId?'Staff updated ✓':'Staff added ✓','success'); loadStaff()
+}
+
+async function deleteStaff(id, name) {
+  if (!confirm(`Delete ${name}? This cannot be undone.`)) return
+  const { error } = await sb.from('staff').delete().eq('id',id)
+  if (error){showToast('Error: '+safeDbError(error),'error');return}
+  showToast('Staff deleted ✓','success'); loadStaff()
+}
+
+/* ══════════════════════════════════════════════════════
+   TWO-FACTOR AUTH
+══════════════════════════════════════════════════════ */
+async function load2FAStatus() {
+  const area=document.getElementById('twofa-status-area'); if (!area) return
+  try {
+    const { data, error } = await sb.auth.mfa.listFactors()
+    if (error) throw error
+    const verified=data?.totp?.find(f=>f.status==='verified')
+    const unverified=data?.totp?.find(f=>f.status==='unverified')
+    if (verified){
+      totpFactorId=verified.id
+      area.innerHTML=`<div class="settings-toggle">
+        <div><div class="st-label" style="color:var(--c-confirmed)">✓ 2FA Enabled</div><div class="st-desc">Your account is protected with TOTP authentication</div></div>
+        <button class="act-btn cancel" onclick="disable2FA()">Disable</button>
+      </div>`
+    } else {
+      if (unverified) await sb.auth.mfa.unenroll({factorId:unverified.id})
+      area.innerHTML=`<div class="settings-toggle">
+        <div><div class="st-label">2FA Not Enabled</div><div class="st-desc">Add an extra layer of security to your account</div></div>
+        <button class="act-btn confirm" onclick="setup2FA()">Enable</button>
+      </div>`
+    }
+  } catch(e) { area.innerHTML='<div class="no-data">Could not load 2FA status</div>' }
+}
+
+async function setup2FA() {
+  const { data, error } = await sb.auth.mfa.enroll({ factorType:'totp' })
+  if (error){showToast('2FA setup failed: '+error.message,'error');return}
+  totpFactorId=data.id
+  document.getElementById('totp-qr').src=data.totp.qr_code
+  document.getElementById('totp-secret').textContent=data.totp.secret
+  document.getElementById('totp-verify-code').value=''
+  document.getElementById('totp-modal').classList.add('open')
+}
+
+async function verifyTOTP() {
+  const code=document.getElementById('totp-verify-code').value.trim()
+  const err=document.getElementById('totp-err'); err.classList.remove('show')
+  const tl = totpLimiter.try()
+  if (!tl.allowed) { showErr(err, tl.message); return }
+  if (!/^\d{6}$/.test(code)){showErr(err,'Enter the 6-digit code from your authenticator app.');return}
+  const { data:challengeData, error:challengeErr } = await sb.auth.mfa.challenge({factorId:totpFactorId})
+  if (challengeErr){showErr(err,safeDbError(challengeErr));return}
+  const { error:verifyErr } = await sb.auth.mfa.verify({factorId:totpFactorId,challengeId:challengeData.id,code})
+  if (verifyErr){showErr(err,'Invalid code — please try again.');return}
+  totpLimiter.reset()
+  closeModal('totp'); showToast('2FA enabled successfully ✓','success'); load2FAStatus()
+}
+
+async function disable2FA() {
+  if (!confirm('Disable two-factor authentication? Your account will be less secure.')) return
+  if (!totpFactorId) return
+  const password = prompt('Re-enter your password to confirm:')
+  if (!password) return
+  const pwCheck = Validate.sanitizeText(password, 128)
+  if (!pwCheck) { showToast('Password required to disable 2FA.', 'error'); return }
+  const { error: reAuthError } = await sb.auth.signInWithPassword({ email: currentUser.email, password: pwCheck })
+  if (reAuthError) { showToast('Incorrect password — 2FA not disabled.', 'error'); return }
+  const { error } = await sb.auth.mfa.unenroll({ factorId: totpFactorId })
+  if (error) { showToast('Error: ' + safeDbError(error), 'error'); return }
+  totpFactorId = null
+  showToast('2FA disabled', 'info')
+  load2FAStatus()
+}
+
+/* ══════════════════════════════════════════════════════
+   NOTIFICATIONS
+══════════════════════════════════════════════════════ */
+async function loadNotifications() {
+  const { data } = await sb.from('notification_log').select('*, booking:bookings(client_name,client_email)').order('sent_at',{ascending:false}).limit(50)
+  const list=document.getElementById('notif-list')
+  if (!data?.length){list.innerHTML='<div class="no-data">No notifications sent yet.</div>';return}
+  const icons={email:'📧',sms:'📱'}
+  list.innerHTML=data.map(n=>`<div class="log-item">
+    <div class="log-icon">${icons[n.channel]||'🔔'}</div>
+    <div class="log-info"><div class="log-desc">${esc(n.type)} → ${esc(n.booking?.client_name||n.recipient)} (${esc(n.channel)})</div><div class="log-time">${new Date(n.sent_at).toLocaleString()}</div></div>
+    <div class="log-status log-${n.status==='sent'?'sent':'failed'}">${esc(n.status)}</div>
+  </div>`).join('')
+}
+
+/* ══════════════════════════════════════════════════════
+   AUDIT LOG
+══════════════════════════════════════════════════════ */
+async function loadAuditLog() {
+  const tableF  = document.getElementById('audit-table-filter').value
+  const actionF = document.getElementById('audit-action-filter').value
+  const actorF  = document.getElementById('audit-actor-filter').value
+    .trim().toLowerCase().replace(/[^\w@.\-]/g, '').slice(0, 100)
+  let q = sb.from('audit_log').select('*').order('created_at',{ascending:false}).limit(200)
+  if (tableF)  q=q.eq('table_name',tableF)
+  if (actionF) q=q.eq('action',actionF)
+  if (actorF)  q=q.ilike('actor_email',`%${actorF}%`)
+  const { data, error } = await q
+  const tbody=document.getElementById('audit-tbody')
+  if (error||!data?.length){tbody.innerHTML=`<tr><td colspan="6" class="no-data">No audit records found.</td></tr>`;return}
+  const actionColors={INSERT:'var(--c-confirmed)',UPDATE:'var(--gold)',DELETE:'var(--c-cancelled)'}
+  tbody.innerHTML=data.map(row=>{
+    const when=new Date(row.created_at).toLocaleString()
+    const color=actionColors[row.action]||'var(--text-muted)'
+    const detail=buildAuditDetail(row)
+    return `<tr>
+      <td style="font-size:11px;white-space:nowrap">${esc(when)}</td>
+      <td style="font-size:11px">${esc(row.actor_email||'—')}</td>
+      <td><span style="color:${color};font-size:10px;letter-spacing:1px">${esc(row.action)}</span></td>
+      <td style="font-size:11px">${esc(row.table_name)}</td>
+      <td style="font-size:10px;color:var(--text-muted)">${esc(String(row.record_id||'—').slice(0,8))}…</td>
+      <td style="font-size:11px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(detail)}">${esc(detail)}</td>
+    </tr>`
+  }).join('')
+}
+
+function buildAuditDetail(row) {
+  try {
+    const safeStr = (v) => (v != null ? String(v).slice(0, 120) : '')
+    if (row.action === 'DELETE' && row.old_data) {
+      const label = safeStr(row.old_data.name || row.old_data.client_name || row.record_id)
+      return `Deleted: ${label}`
+    }
+    if (row.action === 'INSERT' && row.new_data) {
+      const label = safeStr(row.new_data.name || row.new_data.client_name || row.record_id)
+      return `Created: ${label}`
+    }
+    if (row.action === 'UPDATE' && row.old_data && row.new_data) {
+      const SKIP = new Set(['updated_at', 'created_at', 'avatar_url'])
+      const changed = Object.keys(row.new_data).filter(k =>
+        !SKIP.has(k) && JSON.stringify(row.old_data[k]) !== JSON.stringify(row.new_data[k])
+      )
+      return changed.length ? `Changed: ${changed.slice(0, 10).join(', ')}` : 'No changes recorded'
+    }
+  } catch { return '—' }
+  return '—'
+}
+
+/* ══════════════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════════════ */
+function fmtTime(t) {
+  if (!t) return '—'
+  const [h,m]=t.substring(0,5).split(':').map(Number)
+  return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`
+}
+function showErr(el, msg) { el.textContent=msg; el.classList.add('show') }
+function safeDbError(err) {
+  if (!err?.message) return 'An unexpected error occurred.'
+  const blocked = /column|relation|table|syntax|violates|constraint|duplicate|null value|foreign key/i
+  if (blocked.test(err.message)) return 'Operation failed. Please check your input and try again.'
+  return String(err.message).slice(0, 120)
+}
+function showToast(msg, type='success') {
+  const t=document.getElementById('toast')
+  t.textContent=msg; t.className=`toast show ${type}`
+  clearTimeout(t._timer); t._timer=setTimeout(()=>t.classList.remove('show'),3200)
+}
+
+/* Close modals on overlay click */
+;['service-modal','booking-modal','staff-modal','totp-modal','coupon-modal','gift-card-modal'].forEach(id=>{
+    document.getElementById(id).addEventListener('click',function(e){
+    if(e.target===this){
+      const type=id.replace('-modal','')
+      closeModal(type)
+      if(type==='service') resetServiceModal()
+      if(type==='staff')   resetStaffModal()
+    }
+  })
+})
+
+/* ══════════════════════════════════════════════════════
+   FAVICON
+══════════════════════════════════════════════════════ */
+async function loadFaviconSetting() {
+  try {
+    const { data } = await sb.from('salon_settings').select('favicon_url').eq('id', 1).single()
+    if (data?.favicon_url) applyFavicon(data.favicon_url)
+  } catch(e) {}
+}
+
+function applyFavicon(url) {
+  // Update <link rel="icon"> — create if missing
+  let link = document.querySelector("link[rel~='icon']")
+  if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link) }
+  link.href = url
+
+  // Update preview tile
+  const preview = document.getElementById('favicon-preview')
+  if (preview) {
+    preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:contain;border-radius:4px">`
+  }
+  const removeBtn = document.getElementById('favicon-remove-btn')
+  if (removeBtn) removeBtn.style.display = 'block'
+}
+
+async function handleFaviconUpload(event) {
+  const file = event.target.files[0]
+  if (!file) return
+  if (file.size > 512 * 1024) { showToast('Favicon must be under 512 KB', 'error'); return }
+  const allowed = ['image/png','image/x-icon','image/svg+xml','image/jpeg','image/webp']
+  if (!allowed.includes(file.type)) { showToast('Unsupported file type', 'error'); return }
+
+  showToast('Uploading favicon…', 'info')
+  try {
+    const ext = file.name.split('.').pop().toLowerCase() || 'png'
+    const path = `favicon-${Date.now()}.${ext}`
+    const { error: upErr } = await sb.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
+    if (upErr) throw upErr
+
+    const { data: urlData } = sb.storage.from('avatars').getPublicUrl(path)
+    const url = urlData.publicUrl
+
+    const { error: dbErr } = await sb.from('salon_settings').upsert({ id: 1, favicon_url: url }, { onConflict: 'id' })
+    if (dbErr) throw dbErr
+
+    applyFavicon(url)
+    showToast('Favicon updated ✓', 'success')
+  } catch(e) {
+    showToast('Upload failed: ' + e.message, 'error')
+  }
+  event.target.value = ''
+}
+
+async function removeFavicon() {
+  if (!confirm('Remove the favicon?')) return
+  const { error } = await sb.from('salon_settings').upsert({ id: 1, favicon_url: null }, { onConflict: 'id' })
+  if (error) { showToast('Failed: ' + error.message, 'error'); return }
+
+  let link = document.querySelector("link[rel~='icon']")
+  if (link) link.href = ''
+
+  const preview = document.getElementById('favicon-preview')
+  if (preview) preview.innerHTML = '🌸'
+  const removeBtn = document.getElementById('favicon-remove-btn')
+  if (removeBtn) removeBtn.style.display = 'none'
+
+  showToast('Favicon removed ✓', 'success')
+}
+/* ══════════════════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════════════════ */
+sb.auth.getSession().then(async ({ data:{ session } }) => {
+  // If the user arrived via a password-reset link, skip normal login flow.
+  if (IS_RECOVERY) return
+
+  if (!session) return
+  const { data:{ user }, error:userError } = await sb.auth.getUser()
+  if (userError||!user) { await sb.auth.signOut(); return }
+  currentUser = user
+  await loadStaffRecord()
+  if (!currentStaff||currentStaff.is_active===false) {
+    await sb.auth.signOut()
+    document.getElementById('login-err').textContent='Account not found or deactivated.'
+    document.getElementById('login-err').classList.add('show')
+    return
+  }
+  showApp(); setupRealtime(); resetSessionTimer()
+})
+/* ══════════════════════════════════════════════════════
+   STAFF TIME BLOCKS
+══════════════════════════════════════════════════════ */
+
+async function openBlockModal() {
+  const { data: stf } = await sb.from('staff').select('id,name').eq('is_active', true).order('name')
+  document.getElementById('blk-staff').innerHTML =
+    (stf || []).map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('')
+  document.getElementById('blk-date').value   = salonDateStr()
+  document.getElementById('blk-reason').value = ''
+  document.getElementById('blk-start').value  = '09:00'
+  document.getElementById('blk-end').value    = '13:00'
+  document.getElementById('blk-err').classList.remove('show')
+  document.getElementById('block-modal').classList.add('open')
+}
+
+async function saveBlock() {
+  const err     = document.getElementById('blk-err')
+  err.classList.remove('show')
+  const staffId = document.getElementById('blk-staff').value
+  const date    = document.getElementById('blk-date').value
+  const start   = document.getElementById('blk-start').value
+  const end     = document.getElementById('blk-end').value
+  const reason  = Validate.sanitizeText(document.getElementById('blk-reason').value, 200)
+
+  if (!staffId)       { showErr(err, 'Please select a staff member.'); return }
+  if (!date)          { showErr(err, 'Please pick a date.'); return }
+  if (!start || !end) { showErr(err, 'Please set start and end times.'); return }
+  if (start >= end)   { showErr(err, 'End time must be after start time.'); return }
+
+  const { error } = await sb.from('staff_blocks').insert({
+    staff_id:   staffId,
+    block_date: date,
+    start_time: start + ':00',
+    end_time:   end   + ':00',
+    reason:     reason || null
+  })
+
+  if (error) { showErr(err, safeDbError(error)); return }
+
+  closeModal('block')
+  showToast('Hours blocked ✓', 'success')
+  loadBlocks()
+  if (document.getElementById('booking-modal').classList.contains('open')) {
+    refreshAdminTimeSlots()
+  }
+}
+
+async function loadBlocks() {
+  const staffF = document.getElementById('blk-filter-staff')?.value || ''
+  const dateF  = document.getElementById('blk-filter-date')?.value  || ''
+
+  let q = sb.from('staff_blocks')
+    .select('*, staff:staff(name)')
+    .order('block_date', { ascending: false })
+    .order('start_time')
+    .limit(200)
+
+  if (staffF) q = q.eq('staff_id', staffF)
+  if (dateF)  q = q.eq('block_date', dateF)
+
+  const { data, error } = await q
+  const tbody = document.getElementById('blocks-tbody')
+
+  if (error || !data?.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="no-data">No time blocks found.</td></tr>`
+    return
+  }
+
+  tbody.innerHTML = data.map(b => {
+    const d = new Date(b.block_date + 'T00:00:00')
+    const dateLabel = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' })
+    return `<tr>
+      <td class="td-primary">${esc(b.staff?.name || '—')}</td>
+      <td>${esc(dateLabel)}</td>
+      <td style="color:var(--c-cancelled)">${fmtTime(b.start_time)}</td>
+      <td style="color:var(--c-cancelled)">${fmtTime(b.end_time)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${esc(b.reason || '—')}</td>
+      <td><button class="act-btn cancel" onclick="deleteBlock('${esc(b.id)}')">Remove</button></td>
+    </tr>`
+  }).join('')
+
+  // Populate staff filter dropdown from loaded data
+  const sf = document.getElementById('blk-filter-staff')
+  if (sf && sf.options.length <= 1) {
+    const seen = new Map()
+    data.forEach(b => { if (b.staff) seen.set(b.staff_id, b.staff.name) })
+    seen.forEach((name, id) => {
+      const o = document.createElement('option')
+      o.value = id; o.textContent = name; sf.appendChild(o)
+    })
+  }
+}
+/* ══════════════════════════════════════════════════════
+   WEEKLY SCHEDULE + HOLIDAYS
+══════════════════════════════════════════════════════ */
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+
+async function loadWeeklySchedule() {
+  const area = document.getElementById('weekly-schedule-ui')
+  if (!area) return
+  const { data } = await sb.from('salon_schedule').select('*').order('day_of_week')
+  if (!data) return
+  area.innerHTML = data.map(row => `
+    <div class="settings-toggle" style="gap:10px;flex-wrap:wrap">
+      <label class="toggle-switch" style="flex-shrink:0">
+        <input type="checkbox" id="sch-open-${row.day_of_week}" ${row.is_open ? 'checked' : ''} onchange="toggleDayOpen(${row.day_of_week})">
+        <span class="toggle-slider"></span>
+      </label>
+      <div style="min-width:90px;font-size:13px;font-weight:400">${DAY_NAMES[row.day_of_week]}</div>
+      <div id="sch-hours-${row.day_of_week}" style="display:${row.is_open ? 'flex' : 'none'};align-items:center;gap:8px;flex-wrap:wrap">
+        <input type="time" class="modal-input" id="sch-open-h-${row.day_of_week}" value="${String(row.open_hour).padStart(2,'0')}:00" style="width:110px;padding:6px 10px">
+        <span style="color:var(--text-muted);font-size:12px">to</span>
+        <input type="time" class="modal-input" id="sch-close-h-${row.day_of_week}" value="${String(row.close_hour).padStart(2,'0')}:00" style="width:110px;padding:6px 10px">
+        <button class="act-btn confirm" onclick="saveDaySchedule(${row.day_of_week})">Save</button>
+      </div>
+      <div id="sch-closed-${row.day_of_week}" style="display:${row.is_open ? 'none' : 'block'};font-size:11px;color:var(--text-muted);letter-spacing:1px">CLOSED</div>
+    </div>
+  `).join('')
+}
+
+async function toggleDayOpen(dow) {
+  const isOpen = document.getElementById(`sch-open-${dow}`).checked
+  document.getElementById(`sch-hours-${dow}`).style.display  = isOpen ? 'flex' : 'none'
+  document.getElementById(`sch-closed-${dow}`).style.display = isOpen ? 'none' : 'block'
+  const { error } = await sb.from('salon_schedule').update({ is_open: isOpen }).eq('day_of_week', dow)
+  if (error) { showToast('Save failed: ' + error.message, 'error'); return }
+  showToast(`${DAY_NAMES[dow]} ${isOpen ? 'open' : 'closed'} ✓`, 'success')
+}
+
+async function saveDaySchedule(dow) {
+  const openVal  = document.getElementById(`sch-open-h-${dow}`).value
+  const closeVal = document.getElementById(`sch-close-h-${dow}`).value
+  const openH  = parseInt(openVal.split(':')[0])
+  const closeH = parseInt(closeVal.split(':')[0])
+  if (isNaN(openH) || isNaN(closeH) || closeH <= openH) {
+    showToast('Close time must be after open time', 'error'); return
+  }
+  const { error } = await sb.from('salon_schedule').update({ open_hour: openH, close_hour: closeH }).eq('day_of_week', dow)
+  if (error) { showToast('Save failed: ' + error.message, 'error'); return }
+  showToast(`${DAY_NAMES[dow]} hours saved ✓`, 'success')
+}
+
+async function loadHolidays() {
+  const area = document.getElementById('holidays-ui')
+  if (!area) return
+  const { data } = await sb.from('salon_holidays').select('*').order('date')
+  if (!data || !data.length) {
+    area.innerHTML = '<div class="no-data" style="padding:16px 0">No closures added yet</div>'
+    return
+  }
+  area.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>Label</th><th></th></tr></thead>
+    <tbody>${data.map(h => {
+      const d = new Date(h.date + 'T00:00:00')
+      const label = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' })
+      return `<tr>
+        <td style="font-size:12px;color:var(--gold)">${label}</td>
+        <td style="font-size:12px">${esc(h.label || '—')}</td>
+        <td><button class="act-btn cancel" onclick="deleteHoliday('${esc(h.id)}')">Remove</button></td>
+      </tr>`
+    }).join('')}</tbody>
+  </table></div>`
+}
+
+function addHolidayRow() {
+  const area = document.getElementById('holidays-ui')
+  if (document.getElementById('new-holiday-row')) return
+  const row = document.createElement('div')
+  row.id = 'new-holiday-row'
+  row.style.cssText = 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px'
+  row.innerHTML = `
+    <input type="date" class="modal-input" id="new-hol-date" style="width:160px;padding:7px 10px" min="${salonDateStr()}">
+    <input type="text" class="modal-input" id="new-hol-label" placeholder="e.g. Christmas Day" style="flex:1;min-width:160px;padding:7px 10px">
+    <button class="act-btn confirm" onclick="saveNewHoliday()">Add</button>
+    <button class="act-btn" onclick="document.getElementById('new-holiday-row').remove()">Cancel</button>
+  `
+  area.appendChild(row)
+}
+
+async function saveNewHoliday() {
+  const date  = document.getElementById('new-hol-date').value
+  const label = Validate.sanitizeText(document.getElementById('new-hol-label').value, 100)
+  if (!date) { showToast('Please pick a date', 'error'); return }
+  const { error } = await sb.from('salon_holidays').insert({ date, label: label || null })
+  if (error) {
+    if (error.code === '23505') showToast('That date is already added', 'error')
+    else showToast('Error: ' + error.message, 'error')
+    return
+  }
+  document.getElementById('new-holiday-row')?.remove()
+  showToast('Closure added ✓', 'success')
+  loadHolidays()
+}
+
+async function deleteHoliday(id) {
+  if (!confirm('Remove this closure date?')) return
+  const { error } = await sb.from('salon_holidays').delete().eq('id', id)
+  if (error) { showToast('Error: ' + error.message, 'error'); return }
+  showToast('Removed ✓', 'success')
+  loadHolidays()
+}
+async function deleteBlock(id) {
+  if (!confirm('Remove this time block?')) return
+  const { error } = await sb.from('staff_blocks').delete().eq('id', id)
+  if (error) { showToast('Error: ' + safeDbError(error), 'error'); return }
+  showToast('Block removed ✓', 'success')
+  loadBlocks()
+  if (document.getElementById('booking-modal').classList.contains('open')) {
+    refreshAdminTimeSlots()
+  }
+}
+/* ══════════════════════════════════════════════════════
+   PROMOTIONS — COUPONS
+══════════════════════════════════════════════════════ */
+function openCouponModal() {
+  ['cp-code','cp-desc','cp-value','cp-max-uses','cp-until'].forEach(id => document.getElementById(id).value = '')
+  document.getElementById('cp-min-bookings').value = '0'
+  document.getElementById('cp-type').value = 'percent'
+  document.getElementById('cp-from').value = salonDateStr()
+  document.getElementById('cp-err').classList.remove('show')
+  document.getElementById('coupon-modal').classList.add('open')
+}
+
+async function loadCoupons() {
+  const { data } = await sb.from('coupons').select('*').order('created_at', { ascending: false })
+  const tbody = document.getElementById('coupons-tbody')
+  if (!data?.length) { tbody.innerHTML = `<tr><td colspan="7" class="no-data">No coupons yet</td></tr>`; return }
+  tbody.innerHTML = data.map(c => {
+    const val = c.type === 'percent' ? `${c.value}% off` : `$${parseFloat(c.value).toFixed(2)} off`
+    const uses = c.max_uses ? `${c.uses_count}/${c.max_uses}` : `${c.uses_count} / ∞`
+    const expires = c.valid_until ? new Date(c.valid_until+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'
+    return `<tr>
+      <td style="font-family:monospace;font-size:13px;color:var(--gold)">${esc(c.code)}</td>
+      <td style="font-size:12px">${esc(c.description||'—')}</td>
+      <td><span class="badge badge-${c.type==='percent'?'confirmed':'completed'}">${esc(val)}</span></td>
+      <td style="font-size:12px">${esc(uses)}</td>
+      <td style="font-size:12px">${esc(expires)}</td>
+      <td><span class="badge badge-${c.is_active?'confirmed':'cancelled'}">${c.is_active?'Active':'Inactive'}</span></td>
+      <td><div class="action-btns">
+        <button class="act-btn ${c.is_active?'cancel':'confirm'}" onclick="toggleCoupon('${esc(c.id)}',${!c.is_active})">${c.is_active?'Disable':'Enable'}</button>
+        <button class="act-btn cancel" onclick="deleteCoupon('${esc(c.id)}','${esc(c.code)}')">Delete</button>
+      </div></td>
+    </tr>`
+  }).join('')
+}
+
+async function saveCoupon() {
+  const err = document.getElementById('cp-err')
+  err.classList.remove('show')
+  const code = document.getElementById('cp-code').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'')
+  const type = document.getElementById('cp-type').value
+  const value = parseFloat(document.getElementById('cp-value').value)
+  const maxUses = document.getElementById('cp-max-uses').value ? parseInt(document.getElementById('cp-max-uses').value) : null
+  const minBookings = parseInt(document.getElementById('cp-min-bookings').value) || 0
+  const from = document.getElementById('cp-from').value || salonDateStr()
+  const until = document.getElementById('cp-until').value || null
+  const desc = Validate.sanitizeText(document.getElementById('cp-desc').value, 100)
+
+  if (!code || code.length < 3) { showErr(err, 'Code must be at least 3 characters (letters/numbers only).'); return }
+  if (isNaN(value) || value <= 0) { showErr(err, 'Value must be greater than 0.'); return }
+  if (type === 'percent' && value > 100) { showErr(err, 'Percent discount cannot exceed 100%.'); return }
+
+  const { error } = await sb.from('coupons').insert({
+    code, description: desc||null, type, value,
+    min_bookings: minBookings, max_uses: maxUses,
+    valid_from: from, valid_until: until
+  })
+  if (error) {
+    if (error.code === '23505') showErr(err, 'That code already exists — please use a different one.')
+    else showErr(err, safeDbError(error))
+    return
+  }
+  closeModal('coupon')
+  showToast(`Coupon ${code} created ✓`, 'success')
+  loadCoupons()
+}
+
+async function toggleCoupon(id, newState) {
+  const { error } = await sb.from('coupons').update({ is_active: newState }).eq('id', id)
+  if (error) { showToast('Failed: ' + error.message, 'error'); return }
+  showToast(newState ? 'Coupon enabled ✓' : 'Coupon disabled ✓', 'success')
+  loadCoupons()
+}
+
+async function deleteCoupon(id, code) {
+  if (!confirm(`Delete coupon "${code}"?`)) return
+  const { error } = await sb.from('coupons').delete().eq('id', id)
+  if (error) { showToast('Error: ' + safeDbError(error), 'error'); return }
+  showToast('Coupon deleted ✓', 'success')
+  loadCoupons()
+}
+
+/* ══════════════════════════════════════════════════════
+   PROMOTIONS — GIFT CARDS
+══════════════════════════════════════════════════════ */
+function openGiftCardModal() {
+  ['gc-name','gc-email','gc-expires'].forEach(id => document.getElementById(id).value = '')
+  document.getElementById('gc-balance').value = ''
+  document.getElementById('gc-err').classList.remove('show')
+  document.getElementById('gift-card-modal').classList.add('open')
+}
+
+function generateGiftCardCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  return 'GC-' + Array.from({length:3}, () =>
+    Array.from({length:4}, () => chars[Math.floor(Math.random()*chars.length)]).join('')
+  ).join('-')
+}
+
+async function loadGiftCards() {
+  const { data } = await sb.from('gift_cards').select('*').order('created_at', { ascending: false })
+  const tbody = document.getElementById('gift-cards-tbody')
+  if (!data?.length) { tbody.innerHTML = `<tr><td colspan="6" class="no-data">No gift cards yet</td></tr>`; return }
+  tbody.innerHTML = data.map(gc => {
+    const expires = gc.expires_at ? new Date(gc.expires_at+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'
+    const balPct = Math.round((gc.remaining_balance / gc.initial_balance) * 100)
+    return `<tr>
+      <td style="font-family:monospace;font-size:12px;color:var(--gold)">${esc(gc.code)}</td>
+      <td>
+        <div style="font-size:13px;color:var(--c-confirmed)">$${parseFloat(gc.remaining_balance).toFixed(2)} left</div>
+        <div class="td-secondary">of $${parseFloat(gc.initial_balance).toFixed(2)}</div>
+        <div style="height:3px;background:var(--border);border-radius:2px;margin-top:4px;width:80px">
+          <div style="height:100%;width:${balPct}%;background:var(--c-confirmed);border-radius:2px"></div>
+        </div>
+      </td>
+      <td style="font-size:12px">${esc(gc.issued_to_name||'—')}<br><span class="td-secondary">${esc(gc.issued_to_email||'')}</span></td>
+      <td style="font-size:12px">${esc(expires)}</td>
+      <td><span class="badge badge-${gc.is_active?'confirmed':'cancelled'}">${gc.is_active?'Active':'Inactive'}</span></td>
+      <td><button class="act-btn cancel" onclick="deactivateGiftCard('${esc(gc.id)}')">Deactivate</button></td>
+    </tr>`
+  }).join('')
+}
+
+async function saveGiftCard() {
+  const err = document.getElementById('gc-err')
+  err.classList.remove('show')
+  const name = Validate.sanitizeText(document.getElementById('gc-name').value, 100)
+  const emailVal = Validate.email(document.getElementById('gc-email').value)
+  const balance = parseFloat(document.getElementById('gc-balance').value)
+  const expires = document.getElementById('gc-expires').value || null
+
+  if (!name) { showErr(err, 'Recipient name is required.'); return }
+  if (emailVal.error) { showErr(err, emailVal.error); return }
+if (isNaN(balance) || balance < 1) { showErr(err, 'Balance must be at least $1.'); return }
+
+  const code = generateGiftCardCode()
+  const { error } = await sb.from('gift_cards').insert({
+    code,
+    initial_balance: balance,
+    remaining_balance: balance,
+    issued_to_name: name,
+    issued_to_email: emailVal.value,
+    expires_at: expires,
+    is_active: true
+  })
+  if (error) {
+    if (error.code === '23505') showErr(err, 'Code collision — please try again.')
+    else showErr(err, safeDbError(error))
+    return
+  }
+  closeModal('gift-card')
+  showToast(`Gift card ${code} issued ✓`, 'success')
+  loadGiftCards()
+}
+
+async function deactivateGiftCard(id) {
+  if (!confirm('Deactivate this gift card? It can no longer be used.')) return
+  const { error } = await sb.from('gift_cards').update({ is_active: false }).eq('id', id)
+  if (error) { showToast('Error: ' + safeDbError(error), 'error'); return }
+  showToast('Gift card deactivated ✓', 'success')
+  loadGiftCards()
+}  
+</script>
+</body>
+</html>
